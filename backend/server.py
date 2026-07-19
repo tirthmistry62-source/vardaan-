@@ -113,6 +113,13 @@ class ParentUpdateIn(BaseModel):
     full_name: Optional[str] = None
     phone: Optional[str] = None
 
+class DoctorUpdateIn(BaseModel):
+    doctor_name: Optional[str] = None
+    phone: Optional[str] = None
+    clinic_name: Optional[str] = None
+    clinic_address: Optional[str] = None
+    profile_photo_url: Optional[str] = None
+
 class ChildUpdateIn(BaseModel):
     name: Optional[str] = None
     dob: Optional[str] = None
@@ -211,6 +218,48 @@ async def doctor_me(cur=Depends(require_doctor)):
     if not d:
         raise HTTPException(404, "Doctor not found")
     return d
+
+@api.patch('/doctor/me')
+async def doctor_update(body: DoctorUpdateIn, cur=Depends(require_doctor)):
+    updates = {}
+    if body.doctor_name is not None:
+        name = body.doctor_name.strip()
+        if not name:
+            raise HTTPException(400, "Name cannot be empty")
+        updates['doctor_name'] = name
+    if body.phone is not None:
+        if not valid_phone(body.phone):
+            raise HTTPException(400, "Invalid phone number")
+        existing = await db.doctors.find_one({'phone': body.phone, 'id': {'$ne': cur['user_id']}})
+        if existing:
+            raise HTTPException(409, "Phone already registered")
+        updates['phone'] = body.phone
+    if body.clinic_name is not None:
+        if not body.clinic_name.strip():
+            raise HTTPException(400, "Clinic name cannot be empty")
+        updates['clinic_name'] = body.clinic_name.strip()
+    if body.clinic_address is not None:
+        if not body.clinic_address.strip():
+            raise HTTPException(400, "Clinic address cannot be empty")
+        updates['clinic_address'] = body.clinic_address.strip()
+    if body.profile_photo_url is not None:
+        updates['profile_photo_url'] = body.profile_photo_url or None
+    if not updates:
+        raise HTTPException(400, "Nothing to update")
+    await db.doctors.update_one({'id': cur['user_id']}, {'$set': updates})
+    d = await db.doctors.find_one({'id': cur['user_id']}, {'_id': 0, 'password_hash': 0})
+    return d
+
+@api.post('/doctor/me/delete')
+async def doctor_delete(body: ConfirmDeleteIn, cur=Depends(require_doctor)):
+    if body.confirm_phrase.strip() != CONFIRM_DELETE_PARENT:
+        raise HTTPException(400, f'You must type exactly: "{CONFIRM_DELETE_PARENT}"')
+    doctor = await db.doctors.find_one({'id': cur['user_id']})
+    if not doctor:
+        raise HTTPException(404, "Doctor not found")
+    # NOTE: vaccination records are medical history — we keep them (with the doctor's name snapshot).
+    await db.doctors.delete_one({'id': cur['user_id']})
+    return {'ok': True}
 
 # ------------- Children -------------
 

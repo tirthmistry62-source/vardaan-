@@ -38,7 +38,7 @@ export default function ParentDashboard() {
   const firstName = session?.user?.full_name?.split(" ")[0] || "there";
 
   return (
-    <AppShell showNotifications unreadCount={unread} showSettings>
+    <AppShell showNotifications unreadCount={unread} settingsPath="/parent/settings">
       <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-8">
         <div>
           <p className="text-slate-500 text-sm">Welcome back</p>

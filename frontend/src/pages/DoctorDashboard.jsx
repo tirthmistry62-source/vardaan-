@@ -31,7 +31,7 @@ export default function DoctorDashboard() {
   };
 
   return (
-    <AppShell>
+    <AppShell settingsPath="/doctor/settings">
       <div className="mb-6">
         <p className="text-slate-500 text-sm">Signed in as</p>
         <h1 className="text-3xl font-display tracking-tight text-slate-900 mt-1">Dr. {session?.user?.doctor_name}</h1>

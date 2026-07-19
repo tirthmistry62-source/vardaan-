@@ -3,7 +3,7 @@ import { Syringe, LogOut, Bell, ArrowLeft, Settings } from "lucide-react";
 import { clearSession, getSession } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 
-export default function AppShell({ children, showNotifications = false, unreadCount = 0, showBack = false, backTo = null, showSettings = false }) {
+export default function AppShell({ children, showNotifications = false, unreadCount = 0, showBack = false, backTo = null, settingsPath = null }) {
   const nav = useNavigate();
   const session = getSession();
 
@@ -37,12 +37,12 @@ export default function AppShell({ children, showNotifications = false, unreadCo
             </Link>
           </div>
           <div className="flex items-center gap-1">
-            {showSettings && (
+            {settingsPath && (
               <Button
                 variant="ghost"
                 size="icon"
                 data-testid="nav-settings-btn"
-                onClick={() => nav("/parent/settings")}
+                onClick={() => nav(settingsPath)}
                 className="rounded-full"
                 aria-label="Settings"
               >

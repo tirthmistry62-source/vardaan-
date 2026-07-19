@@ -17,6 +17,7 @@ import DoctorLogin from "@/pages/DoctorLogin";
 import DoctorRegister from "@/pages/DoctorRegister";
 import DoctorDashboard from "@/pages/DoctorDashboard";
 import DoctorChildRecord from "@/pages/DoctorChildRecord";
+import DoctorSettings from "@/pages/DoctorSettings";
 
 function RequireRole({ role, children }) {
   const s = getSession();
@@ -45,6 +46,7 @@ function App() {
           <Route path="/doctor/login" element={<DoctorLogin />} />
           <Route path="/doctor/register" element={<DoctorRegister />} />
           <Route path="/doctor/dashboard" element={<RequireRole role="doctor"><DoctorDashboard /></RequireRole>} />
+          <Route path="/doctor/settings" element={<RequireRole role="doctor"><DoctorSettings /></RequireRole>} />
           <Route path="/doctor/child/:id" element={<RequireRole role="doctor"><DoctorChildRecord /></RequireRole>} />
 
           <Route path="*" element={<Navigate to="/" replace />} />

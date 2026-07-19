@@ -33,7 +33,7 @@ export default function AppShell({ children, showNotifications = false, unreadCo
               <div className="w-9 h-9 rounded-xl bg-teal-700 text-white grid place-items-center shrink-0">
                 <Syringe className="w-5 h-5" strokeWidth={1.75} />
               </div>
-              <span className="font-display text-lg tracking-tight truncate">VaxLedger</span>
+              <span className="font-display text-lg tracking-tight truncate">Vardaan+</span>
             </Link>
           </div>
           <div className="flex items-center gap-1">

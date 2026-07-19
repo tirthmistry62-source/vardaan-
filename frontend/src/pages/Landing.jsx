@@ -22,7 +22,7 @@ export default function Landing() {
             <path d="m18 2 4 4-6 6-4-4z"/><path d="m11 5 8 8"/><path d="M2 22l7-7"/><path d="m11 12-4 4 4 4"/>
           </svg>
         </div>
-        <h1 className="mt-6 text-4xl sm:text-5xl font-display tracking-tight text-slate-900">VaxLedger</h1>
+        <h1 className="mt-6 text-4xl sm:text-5xl font-display tracking-tight text-slate-900">Vardaan+</h1>
         <p className="mt-3 text-slate-600 max-w-md mx-auto">A lifelong vaccination record for every child. Trusted by parents. Verified by doctors.</p>
         <div className="mt-8 inline-flex items-center gap-2 text-slate-400 text-sm">
           <span className="w-2 h-2 rounded-full bg-teal-500 animate-pulse"></span>

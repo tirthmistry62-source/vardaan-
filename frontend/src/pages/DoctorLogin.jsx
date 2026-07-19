@@ -38,7 +38,7 @@ export default function DoctorLogin() {
           <h2 className="mt-8 text-4xl font-display tracking-tight max-w-sm">Record vaccinations in seconds, not minutes.</h2>
           <p className="mt-4 text-sky-100 max-w-sm">Search by Aadhaar. See what's due. Tap to record. Every parent gets an instant notification.</p>
         </div>
-        <div className="text-sky-100 text-sm">© VaxLedger 2026</div>
+        <div className="text-sky-100 text-sm">© Vardaan+ 2026</div>
         <div className="absolute -bottom-24 -right-24 w-96 h-96 rounded-full bg-sky-400/30 blur-3xl" />
       </div>
       <div className="flex items-center justify-center p-6">

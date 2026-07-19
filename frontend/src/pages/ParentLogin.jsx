@@ -39,7 +39,7 @@ export default function ParentLogin() {
           <h2 className="mt-8 text-4xl font-display tracking-tight max-w-sm">A lifelong vaccination record — always in your pocket.</h2>
           <p className="mt-4 text-teal-100 max-w-sm">Your child's history, from BCG at birth to boosters at 16 — kept safe, searchable, and shareable with any doctor.</p>
         </div>
-        <div className="text-teal-100 text-sm">© VaxLedger 2026</div>
+        <div className="text-teal-100 text-sm">© Vardaan+ 2026</div>
         <div className="absolute -bottom-24 -right-24 w-96 h-96 rounded-full bg-teal-500/30 blur-3xl" />
       </div>
 

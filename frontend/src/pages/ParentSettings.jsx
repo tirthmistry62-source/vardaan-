@@ -132,7 +132,7 @@ export default function ParentSettings() {
           <DialogHeader>
             <DialogTitle className="font-display text-2xl">Delete your account?</DialogTitle>
             <DialogDescription>
-              This will permanently remove your VaxLedger account and any child whose only linked parent is you. Vaccination records for those children will also be permanently deleted.
+              This will permanently remove your Vardaan+ account and any child whose only linked parent is you. Vaccination records for those children will also be permanently deleted.
               <br /><br />
               Children linked to another parent will remain accessible from that parent&apos;s account.
               <br /><br />

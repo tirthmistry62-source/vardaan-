@@ -1,4 +1,4 @@
-"""VaxLedger backend - lifelong vaccination record management."""
+"""Vardaan+ backend - lifelong vaccination record management."""
 from fastapi import FastAPI, APIRouter, HTTPException, Depends, Header
 from fastapi.security import HTTPBearer
 from dotenv import load_dotenv
@@ -25,7 +25,7 @@ JWT_SECRET = os.environ.get('JWT_SECRET', 'vaxledger-dev-secret-change-me')
 JWT_ALGO = 'HS256'
 JWT_TTL_HOURS = 24 * 30  # 30 days
 
-app = FastAPI(title="VaxLedger API")
+app = FastAPI(title="Vardaan+ API")
 api = APIRouter(prefix="/api")
 
 # ------------- Utilities -------------
@@ -468,7 +468,7 @@ async def mark_read(nid: str, cur=Depends(require_parent)):
 
 @api.get('/')
 async def root():
-    return {'app': 'VaxLedger', 'status': 'ok'}
+    return {'app': 'Vardaan+', 'status': 'ok'}
 
 app.include_router(api)
 

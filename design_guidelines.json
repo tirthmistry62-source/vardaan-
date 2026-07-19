@@ -1,0 +1,111 @@
+{
+  "theme": "light",
+  "typography": {
+    "headings": {
+      "fontFamily": "Manrope, sans-serif",
+      "strategy": "Friendly but clinical, providing trust. No Inter.",
+      "weights": ["600", "800"],
+      "tracking": "tracking-tight"
+    },
+    "body": {
+      "fontFamily": "DM Sans, sans-serif",
+      "strategy": "High legibility for medical data and dense information on mobile.",
+      "weights": ["400", "500"]
+    }
+  },
+  "colors": {
+    "primary": "#0F766E", 
+    "primary_foreground": "#FFFFFF",
+    "background": "#F8FAFC",
+    "surface": "#FFFFFF",
+    "border": "#E2E8F0",
+    "text_primary": "#0F172A",
+    "text_secondary": "#475569",
+    "status": {
+      "completed_bg": "#DCFCE7",
+      "completed_text": "#15803D",
+      "pending_bg": "#FEF3C7",
+      "pending_text": "#B45309",
+      "overdue_bg": "#FEE2E2",
+      "overdue_text": "#B91C1C"
+    }
+  },
+  "grids": {
+    "mobile_first": "grid-cols-1 gap-6",
+    "dashboard_desktop": "md:grid-cols-3 lg:grid-cols-4 gap-6",
+    "spacing": "Generous spacing. p-6 or p-8 for card interiors to prevent text collision."
+  },
+  "layouts": {
+    "page_wrapper": "max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8",
+    "cards": "rounded-2xl border border-slate-200 bg-white shadow-[0_8px_30px_rgb(0,0,0,0.04)]",
+    "header": "sticky top-0 z-50 bg-white/90 backdrop-blur-xl border-b border-slate-200",
+    "timeline": "vertical line with overlapping circular nodes. Green/Amber/Red nodes based on vaccine status."
+  },
+  "visual_enhancers": {
+    "shadows": "Ambient and soft. Avoid harsh, tight shadows.",
+    "borders": "1px solid very light gray (slate-200) to ground floating elements.",
+    "surface_strategy": "Solid Flat Surfaces. Do NOT use glassmorphism for medical data cards to ensure maximum clarity and accessibility. Glassmorphism only allowed for the top sticky nav."
+  },
+  "components": {
+    "buttons": "Pill-shaped (rounded-full). Min h-12 for touch targets on mobile. Active state: scale-95.",
+    "inputs": "h-12, rounded-xl, border-slate-300 focus:ring-2 focus:ring-primary/20 focus:border-primary.",
+    "badges": "rounded-full px-3 py-1 text-xs font-semibold for statuses.",
+    "skeleton": "Pulse animation with rounded-2xl or rounded-full matching the replaced content.",
+    "tabs": "Pill-shaped segmented control style instead of standard underline, ensuring clear active state."
+  },
+  "motion": {
+    "route_transitions": "Fade in with subtle slide up (y: 10 to y: 0) using framer-motion.",
+    "interactions": "Hover states on cards (-translate-y-1 + enhanced shadow). Tap states on mobile (scale-95).",
+    "success_state": "Animated checkmark path drawing + scale pulse for vaccination entry success.",
+    "accessibility": "Respect prefers-reduced-motion."
+  },
+  "accessibility": {
+    "contrast": "Strict WCAG AA for all medical text. Ensure status text (green/amber/red) has minimum 4.5:1 ratio against its background.",
+    "touch_targets": "Minimum 48x48px for all interactive elements.",
+    "testing": "All interactive elements MUST include data-testid attribute."
+  },
+  "media": {
+    "icons": "lucide-react for clinical, clean, geometric icons. 1.5px stroke width."
+  },
+  "image_urls": [
+    {
+      "url": "https://images.unsplash.com/photo-1624272864537-8ecc72b67958?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA1ODh8MHwxfHNlYXJjaHwxfHxwYXJlbnQlMjBhbmQlMjBjaGlsZCUyMGhhcHB5JTIwaGVhbHRoY2FyZXxlbnwwfHx8fDE3ODQ0NTczMDl8MA&ixlib=rb-4.1.0&q=85",
+      "category": "hero_parent",
+      "description": "Father hugging laughing young daughter. Use for Parent Role Selection card or Parent Onboarding."
+    },
+    {
+      "url": "https://images.pexels.com/photos/6749778/pexels-photo-6749778.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940",
+      "category": "hero_doctor",
+      "description": "Female doctor with stethoscope. Use for Doctor Role Selection card or Doctor Onboarding."
+    },
+    {
+      "url": "https://images.unsplash.com/photo-1743657166981-8d8e11d03c3e?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NTY2Njd8MHwxfHNlYXJjaHwyfHxtZWRpY2FsJTIwYWJzdHJhY3QlMjBiYWNrZ3JvdW5kJTIwbGlnaHQlMjBjbGVhbnxlbnwwfHx8fDE3ODQ0NTczMDl8MA&ixlib=rb-4.1.0&q=85",
+      "category": "background_abstract",
+      "description": "Abstract light blue flowing lines. Use as a subtle background for the login/auth screens."
+    }
+  ],
+  "instructions_to_main_agent": [
+    "Build a mobile-first PWA, optimized for touch (large buttons, bottom sheets).",
+    "Use Manrope for headings and DM Sans for body. Do not use Inter.",
+    "Implement the UI with standard JS/JSX (.js or .jsx extensions, NOT .tsx as per the project requirements).",
+    "Implement the UI with Shadcn components but heavily customize them. Cards should be rounded-2xl to rounded-3xl with very soft shadows.",
+    "Use framer-motion for route transitions and the success checkmark animation when a doctor records a vaccine.",
+    "Ensure the vaccination timeline clearly visualizes India's UIP schedule grouped by age milestones (Birth, 6 weeks, etc.) with explicit green/amber/red status colors.",
+    "Ensure `data-testid` is added to all form inputs, buttons, and clickable cards."
+  ],
+  "UNIVERSAL GUIDELINES FOR MAIN AGENT": [
+    "Avoid generic 'AI slop' aesthetic. Create depth with layered elements and z-index hierarchy.",
+    "Do NOT use dark colors as gradients.",
+    "DO NOT apply universal transitions (e.g., transition: all). Add transitions to specific properties.",
+    "DO NOT center align the main app container.",
+    "Every interaction needs micro-animations (hover, active, focus states).",
+    "Use 2-3x more spacing than feels comfortable.",
+    "Use sonner for toast notifications."
+  ],
+  "GENERAL UI UX DESIGN GUIDELINES": [
+    "Prioritize optical alignment over geometrical alignment.",
+    "Forms should not use native select/date elements; use customized Shadcn equivalents.",
+    "Use solid, flat surfaces for data-heavy sections (like medical records) to prevent visual refraction and maintain accessibility.",
+    "Never use fully transparent backgrounds under text."
+  ]
+}

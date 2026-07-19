@@ -17,6 +17,7 @@ export default function AddChild() {
     name: "",
     dob: "",
     gender: "",
+    weight_kg: "",
     parent_role: "mother", // which parent am I
     other_aadhaar: "",
     child_aadhaar: "",
@@ -28,6 +29,8 @@ export default function AddChild() {
     if (!form.name.trim()) return toast.error("Enter child's name");
     if (!form.dob) return toast.error("Select date of birth");
     if (!form.gender) return toast.error("Select gender");
+    const w = parseFloat(form.weight_kg);
+    if (!form.weight_kg || isNaN(w) || w <= 0 || w > 200) return toast.error("Enter a valid weight in kg");
     if (form.other_aadhaar && !/^\d{12}$/.test(form.other_aadhaar))
       return toast.error("Other parent's Aadhaar must be 12 digits");
     if (form.child_aadhaar && !/^\d{12}$/.test(form.child_aadhaar))
@@ -37,6 +40,7 @@ export default function AddChild() {
       name: form.name.trim(),
       dob: form.dob,
       gender: form.gender,
+      weight_kg: w,
       child_aadhaar: form.child_aadhaar || null,
       mother_aadhaar: form.parent_role === "mother" ? myAadhaar : (form.other_aadhaar || null),
       father_aadhaar: form.parent_role === "father" ? myAadhaar : (form.other_aadhaar || null),
@@ -64,7 +68,7 @@ export default function AddChild() {
 
         <form onSubmit={submit} className="card-soft p-8 mt-8 grid gap-5">
           <div>
-            <Label>Child's name</Label>
+            <Label>Child&apos;s name</Label>
             <Input data-testid="ch-name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Full name" className="mt-2 h-12 rounded-xl" />
           </div>
           <div className="grid grid-cols-2 gap-3">
@@ -87,6 +91,23 @@ export default function AddChild() {
             </div>
           </div>
           <div>
+            <Label>Current weight (kg)</Label>
+            <div className="mt-2 flex items-stretch rounded-xl border border-slate-300 focus-within:ring-2 focus-within:ring-teal-500/20 focus-within:border-teal-600 overflow-hidden bg-white">
+              <Input
+                data-testid="ch-weight"
+                type="number"
+                min="0"
+                step="0.01"
+                inputMode="decimal"
+                value={form.weight_kg}
+                onChange={(e) => setForm({ ...form, weight_kg: e.target.value })}
+                placeholder="e.g. 3.2"
+                className="flex-1 h-12 border-0 rounded-none focus-visible:ring-0 focus-visible:ring-offset-0 shadow-none"
+              />
+              <span className="px-4 flex items-center bg-slate-50 text-slate-500 font-semibold border-l border-slate-200 select-none">kg</span>
+            </div>
+          </div>
+          <div>
             <Label>You are the</Label>
             <Select value={form.parent_role} onValueChange={(v) => setForm({ ...form, parent_role: v })}>
               <SelectTrigger data-testid="ch-parent-role" className="mt-2 h-12 rounded-xl">
@@ -99,7 +120,7 @@ export default function AddChild() {
             </Select>
           </div>
           <div>
-            <Label>Other parent's Aadhaar (optional)</Label>
+            <Label>Other parent&apos;s Aadhaar (optional)</Label>
             <Input data-testid="ch-other-aadhaar" inputMode="numeric" value={form.other_aadhaar}
               onChange={(e) => setForm({ ...form, other_aadhaar: e.target.value.replace(/\D/g, "").slice(0, 12) })}
               placeholder="12 digits — auto-links this child to them" className="mt-2 h-12 rounded-xl" />

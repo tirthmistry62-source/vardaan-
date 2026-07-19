@@ -78,7 +78,7 @@ export default function ChildProfile() {
           </div>
           <div className="flex-1">
             <h1 className="text-3xl font-display tracking-tight text-slate-900">{child.name}</h1>
-            <p className="text-slate-500 mt-1">{child.gender} • {ageString(child.dob)} • Born {new Date(child.dob).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}</p>
+            <p className="text-slate-500 mt-1">{child.gender} • {ageString(child.dob)} • Born {new Date(child.dob).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}{child.weight_kg != null ? ` • ${child.weight_kg} kg` : ""}</p>
           </div>
           <div className="sm:text-right">
             <div className="text-4xl font-display text-teal-700">{pct}%</div>

@@ -95,6 +95,12 @@ export default function VaccineInfoDialog({ vaccine, open, onOpenChange }) {
               {vaccine.record.clinic_address && (
                 <div className="text-xs text-slate-500 mt-1">{vaccine.record.clinic_address}</div>
               )}
+              {vaccine.record.weight_kg != null && (
+                <div className="mt-3 inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white border border-slate-200 text-xs">
+                  <span className="text-slate-500">Weight at visit</span>
+                  <span className="font-semibold text-slate-900">{vaccine.record.weight_kg} kg</span>
+                </div>
+              )}
             </div>
           )}
 

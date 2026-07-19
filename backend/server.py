@@ -101,12 +101,14 @@ class ChildCreateIn(BaseModel):
     name: str
     dob: str  # ISO date YYYY-MM-DD
     gender: str
+    weight_kg: float
     mother_aadhaar: Optional[str] = None
     father_aadhaar: Optional[str] = None
     child_aadhaar: Optional[str] = None
 
 class VaccinationRecordIn(BaseModel):
     child_id: str
+    weight_kg: float
     entries: List[dict]  # [{vaccine_code, vaccine_name, dose, remarks}]
 
 class ParentUpdateIn(BaseModel):
@@ -124,6 +126,7 @@ class ChildUpdateIn(BaseModel):
     name: Optional[str] = None
     dob: Optional[str] = None
     gender: Optional[str] = None
+    weight_kg: Optional[float] = None
     mother_aadhaar: Optional[str] = None
     father_aadhaar: Optional[str] = None
     child_aadhaar: Optional[str] = None
@@ -277,6 +280,8 @@ async def add_child(body: ChildCreateIn, cur=Depends(require_parent)):
             raise HTTPException(400, "Aadhaar numbers must be 12 digits")
     if not (body.mother_aadhaar or body.father_aadhaar):
         raise HTTPException(400, "Provide at least mother or father Aadhaar")
+    if body.weight_kg is None or body.weight_kg <= 0 or body.weight_kg > 200:
+        raise HTTPException(400, "Enter a valid weight in kg")
     # Auto-link: parent's aadhaar must match one of the given fields
     if parent['aadhaar'] not in (body.mother_aadhaar, body.father_aadhaar):
         raise HTTPException(400, "Your Aadhaar must be entered as mother's or father's Aadhaar")
@@ -285,6 +290,7 @@ async def add_child(body: ChildCreateIn, cur=Depends(require_parent)):
         'name': body.name.strip(),
         'dob': body.dob,
         'gender': body.gender,
+        'weight_kg': round(float(body.weight_kg), 2),
         'mother_aadhaar': body.mother_aadhaar,
         'father_aadhaar': body.father_aadhaar,
         'child_aadhaar': body.child_aadhaar,
@@ -348,6 +354,9 @@ async def record_vaccinations(body: VaccinationRecordIn, cur=Depends(require_doc
         raise HTTPException(404, "Child not found")
     if not body.entries:
         raise HTTPException(400, "No vaccines selected")
+    if body.weight_kg is None or body.weight_kg <= 0 or body.weight_kg > 200:
+        raise HTTPException(400, "Enter the child's current weight in kg")
+    weight = round(float(body.weight_kg), 2)
 
     created = []
     for e in body.entries:
@@ -360,6 +369,7 @@ async def record_vaccinations(body: VaccinationRecordIn, cur=Depends(require_doc
             'vaccine_name': e['vaccine_name'],
             'dose': e['dose'],
             'date_given': e.get('date_given') or now_iso(),
+            'weight_kg': weight,
             'doctor_id': doctor['id'],
             'doctor_name': doctor['doctor_name'],
             'doctor_phone': doctor['phone'],
@@ -464,6 +474,10 @@ async def child_update(child_id: str, body: ChildUpdateIn, cur=Depends(require_p
         if body.gender not in ("Male", "Female", "Other"):
             raise HTTPException(400, "Invalid gender")
         updates['gender'] = body.gender
+    if body.weight_kg is not None:
+        if body.weight_kg <= 0 or body.weight_kg > 200:
+            raise HTTPException(400, "Enter a valid weight in kg")
+        updates['weight_kg'] = round(float(body.weight_kg), 2)
     for fld in ('mother_aadhaar', 'father_aadhaar', 'child_aadhaar'):
         val = getattr(body, fld)
         if val is not None:

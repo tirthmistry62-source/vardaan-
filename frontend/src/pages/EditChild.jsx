@@ -20,7 +20,7 @@ export default function EditChild() {
   const [child, setChild] = useState(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [form, setForm] = useState({ name: "", dob: "", gender: "" });
+  const [form, setForm] = useState({ name: "", dob: "", gender: "", weight_kg: "" });
 
   const [warnOpen, setWarnOpen] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
@@ -32,7 +32,12 @@ export default function EditChild() {
       try {
         const { data } = await api.get(`/children/${id}`);
         setChild(data);
-        setForm({ name: data.name, dob: data.dob, gender: data.gender });
+        setForm({
+          name: data.name,
+          dob: data.dob,
+          gender: data.gender,
+          weight_kg: data.weight_kg != null ? String(data.weight_kg) : "",
+        });
       } finally {
         setLoading(false);
       }
@@ -44,12 +49,15 @@ export default function EditChild() {
     if (!form.name.trim()) return toast.error("Name cannot be empty");
     if (!form.dob) return toast.error("Date of birth required");
     if (!form.gender) return toast.error("Gender required");
+    const w = parseFloat(form.weight_kg);
+    if (!form.weight_kg || isNaN(w) || w <= 0 || w > 200) return toast.error("Enter a valid weight in kg");
     setSaving(true);
     try {
       await api.patch(`/parent/children/${id}`, {
         name: form.name.trim(),
         dob: form.dob,
         gender: form.gender,
+        weight_kg: w,
       });
       toast.success("Child updated");
       nav(`/parent/child/${id}`);
@@ -106,6 +114,23 @@ export default function EditChild() {
                   <SelectItem value="Other">Other</SelectItem>
                 </SelectContent>
               </Select>
+            </div>
+          </div>
+          <div>
+            <Label>Current weight (kg)</Label>
+            <div className="mt-2 flex items-stretch rounded-xl border border-slate-300 focus-within:ring-2 focus-within:ring-teal-500/20 focus-within:border-teal-600 overflow-hidden bg-white">
+              <Input
+                data-testid="edit-child-weight"
+                type="number"
+                min="0"
+                step="0.01"
+                inputMode="decimal"
+                value={form.weight_kg}
+                onChange={(e) => setForm({ ...form, weight_kg: e.target.value })}
+                placeholder="e.g. 3.2"
+                className="flex-1 h-12 border-0 rounded-none focus-visible:ring-0 focus-visible:ring-offset-0 shadow-none"
+              />
+              <span className="px-4 flex items-center bg-slate-50 text-slate-500 font-semibold border-l border-slate-200 select-none">kg</span>
             </div>
           </div>
           <Button data-testid="edit-child-save" type="submit" disabled={saving} className="h-12 rounded-full bg-teal-700 hover:bg-teal-800 text-white">

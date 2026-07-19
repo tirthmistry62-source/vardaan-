@@ -5,6 +5,7 @@ import VaccineInfoDialog from "@/components/VaccineInfoDialog";
 import { api } from "@/lib/api";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Progress } from "@/components/ui/progress";
@@ -29,6 +30,7 @@ export default function DoctorChildRecord() {
   const [saving, setSaving] = useState(false);
   const [success, setSuccess] = useState(null);
   const [infoVaccine, setInfoVaccine] = useState(null);
+  const [weightKg, setWeightKg] = useState("");
 
   const load = async () => {
     setLoading(true);
@@ -56,14 +58,17 @@ export default function DoctorChildRecord() {
 
   const save = async () => {
     if (selected.size === 0) return toast.error("Select at least one vaccine");
+    const w = parseFloat(weightKg);
+    if (!weightKg || isNaN(w) || w <= 0 || w > 200) return toast.error("Enter the child's current weight in kg");
     setSaving(true);
     try {
       const entries = items.filter(i => selected.has(i.code)).map(i => ({
         vaccine_code: i.code, vaccine_name: i.name, dose: i.dose, remarks: "",
       }));
-      const { data } = await api.post("/doctor/vaccinations", { child_id: id, entries });
+      const { data } = await api.post("/doctor/vaccinations", { child_id: id, weight_kg: w, entries });
       setSuccess({ count: data.created.length, names: data.created.map(x => `${x.vaccine_name} (${x.dose})`) });
       setSelected(new Set());
+      setWeightKg("");
       await load();
     } catch (err) {
       toast.error(err?.response?.data?.detail || "Could not save");
@@ -88,7 +93,7 @@ export default function DoctorChildRecord() {
           </div>
           <div className="flex-1">
             <h1 className="text-2xl font-display tracking-tight text-slate-900">{child.name}</h1>
-            <p className="text-slate-500 text-sm mt-1">{child.gender} • {ageString(child.dob)} • DOB {new Date(child.dob).toLocaleDateString("en-IN")}</p>
+            <p className="text-slate-500 text-sm mt-1">{child.gender} • {ageString(child.dob)} • DOB {new Date(child.dob).toLocaleDateString("en-IN")}{child.weight_kg != null ? ` • ${child.weight_kg} kg` : ""}</p>
           </div>
           <div className="sm:text-right">
             <div className="text-3xl font-display text-teal-700">{pct}%</div>
@@ -139,15 +144,36 @@ export default function DoctorChildRecord() {
 
       {selected.size > 0 && (
         <div className="sticky bottom-4 mt-8 z-30">
-          <div className="card-soft p-4 flex items-center justify-between shadow-[0_20px_60px_rgba(15,23,42,0.15)]">
-            <div className="text-sm">
-              <div className="font-semibold text-slate-900">{selected.size} vaccine{selected.size > 1 ? "s" : ""} selected</div>
-              <div className="text-xs text-slate-500">Parents will be notified instantly.</div>
+          <div className="card-soft p-4 shadow-[0_20px_60px_rgba(15,23,42,0.15)]">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+              <div className="text-sm flex-1">
+                <div className="font-semibold text-slate-900">{selected.size} vaccine{selected.size > 1 ? "s" : ""} selected</div>
+                <div className="text-xs text-slate-500">Parents will be notified instantly.</div>
+              </div>
+              <div className="flex-1 sm:max-w-[200px]">
+                <label className="text-xs font-medium text-slate-600 flex items-center gap-1">
+                  Weight now <span className="text-rose-500">*</span>
+                </label>
+                <div className="mt-1 flex items-stretch rounded-xl border border-slate-300 focus-within:ring-2 focus-within:ring-teal-500/20 focus-within:border-teal-600 overflow-hidden bg-white">
+                  <Input
+                    data-testid="doc-weight-input"
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    inputMode="decimal"
+                    value={weightKg}
+                    onChange={(e) => setWeightKg(e.target.value)}
+                    placeholder="e.g. 4.5"
+                    className="flex-1 h-11 border-0 rounded-none focus-visible:ring-0 focus-visible:ring-offset-0 shadow-none"
+                  />
+                  <span className="px-3 flex items-center bg-slate-50 text-slate-500 font-semibold border-l border-slate-200 select-none text-sm">kg</span>
+                </div>
+              </div>
+              <Button data-testid="doc-record-submit" onClick={save} disabled={saving || !weightKg} className="h-12 rounded-full bg-teal-700 hover:bg-teal-800 text-white px-6 gap-2 self-stretch sm:self-auto">
+                <Syringe className="w-4 h-4" />
+                {saving ? "Recording…" : "Record"}
+              </Button>
             </div>
-            <Button data-testid="doc-record-submit" onClick={save} disabled={saving} className="h-12 rounded-full bg-teal-700 hover:bg-teal-800 text-white px-6 gap-2">
-              <Syringe className="w-4 h-4" />
-              {saving ? "Recording…" : "Record"}
-            </Button>
           </div>
         </div>
       )}

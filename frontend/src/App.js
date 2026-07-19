@@ -1,52 +1,49 @@
-import { useEffect } from "react";
 import "@/App.css";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import axios from "axios";
-import { HOME } from "@/constants/testIds";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { Toaster } from "sonner";
+import { getSession } from "@/lib/api";
 
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
-const API = `${BACKEND_URL}/api`;
+import Landing from "@/pages/Landing";
+import SelectRole from "@/pages/SelectRole";
+import ParentLogin from "@/pages/ParentLogin";
+import ParentRegister from "@/pages/ParentRegister";
+import ParentDashboard from "@/pages/ParentDashboard";
+import AddChild from "@/pages/AddChild";
+import ChildProfile from "@/pages/ChildProfile";
+import ParentNotifications from "@/pages/ParentNotifications";
+import DoctorLogin from "@/pages/DoctorLogin";
+import DoctorRegister from "@/pages/DoctorRegister";
+import DoctorDashboard from "@/pages/DoctorDashboard";
+import DoctorChildRecord from "@/pages/DoctorChildRecord";
 
-const Home = () => {
-  const helloWorldApi = async () => {
-    try {
-      const response = await axios.get(`${API}/`);
-      console.log(response.data.message);
-    } catch (e) {
-      console.error(e, `errored out requesting / api`);
-    }
-  };
-
-  useEffect(() => {
-    helloWorldApi();
-  }, []);
-
-  return (
-    <div>
-      <header className="App-header">
-        <a
-          data-testid={HOME.emergentLink}
-          className="App-link"
-          href="https://emergent.sh"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <img src="https://avatars.githubusercontent.com/in/1201222?s=120&u=2686cf91179bbafbc7a71bfbc43004cf9ae1acea&v=4" />
-        </a>
-        <p className="mt-5">Building something incredible ~!</p>
-      </header>
-    </div>
-  );
-};
+function RequireRole({ role, children }) {
+  const s = getSession();
+  if (!s || s.role !== role) return <Navigate to={role === "parent" ? "/parent/login" : "/doctor/login"} replace />;
+  return children;
+}
 
 function App() {
   return (
     <div className="App">
       <BrowserRouter>
+        <Toaster richColors position="top-center" />
         <Routes>
-          <Route path="/" element={<Home />}>
-            <Route index element={<Home />} />
-          </Route>
+          <Route path="/" element={<Landing />} />
+          <Route path="/select-role" element={<SelectRole />} />
+
+          <Route path="/parent/login" element={<ParentLogin />} />
+          <Route path="/parent/register" element={<ParentRegister />} />
+          <Route path="/parent/dashboard" element={<RequireRole role="parent"><ParentDashboard /></RequireRole>} />
+          <Route path="/parent/add-child" element={<RequireRole role="parent"><AddChild /></RequireRole>} />
+          <Route path="/parent/child/:id" element={<RequireRole role="parent"><ChildProfile /></RequireRole>} />
+          <Route path="/parent/notifications" element={<RequireRole role="parent"><ParentNotifications /></RequireRole>} />
+
+          <Route path="/doctor/login" element={<DoctorLogin />} />
+          <Route path="/doctor/register" element={<DoctorRegister />} />
+          <Route path="/doctor/dashboard" element={<RequireRole role="doctor"><DoctorDashboard /></RequireRole>} />
+          <Route path="/doctor/child/:id" element={<RequireRole role="doctor"><DoctorChildRecord /></RequireRole>} />
+
+          <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </BrowserRouter>
     </div>

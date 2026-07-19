@@ -1,0 +1,162 @@
+import { useEffect, useMemo, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+import AppShell from "@/components/AppShell";
+import { api } from "@/lib/api";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Progress } from "@/components/ui/progress";
+import { ArrowLeft, CheckCircle2, Clock, AlertTriangle, CalendarDays, User2, Stethoscope } from "lucide-react";
+import { computeVaccineStatuses, completionPercent, ageString } from "@/lib/vaccineStatus";
+import { MILESTONES } from "@/lib/vaccineSchedule";
+
+const STATUS_META = {
+  completed: { icon: CheckCircle2, cls: "status-completed", label: "Completed", nodeCls: "done" },
+  due:       { icon: Clock,        cls: "status-due",       label: "Due",       nodeCls: "due" },
+  overdue:   { icon: AlertTriangle, cls: "status-overdue",   label: "Overdue",   nodeCls: "over" },
+  upcoming:  { icon: CalendarDays, cls: "status-upcoming",   label: "Upcoming",  nodeCls: "" },
+};
+
+export default function ChildProfile() {
+  const nav = useNavigate();
+  const { id } = useParams();
+  const [child, setChild] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const { data } = await api.get(`/children/${id}`);
+        setChild(data);
+      } catch (e) {
+        setChild(null);
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, [id]);
+
+  const items = useMemo(() => child ? computeVaccineStatuses(child.dob, child.vaccinations) : [], [child]);
+  const grouped = useMemo(() => {
+    const g = {};
+    items.forEach(i => { (g[i.milestone] ||= []).push(i); });
+    return g;
+  }, [items]);
+
+  const pct = child ? completionPercent(child.dob, child.vaccinations) : 0;
+  const counts = useMemo(() => ({
+    completed: items.filter(i => i.status === "completed").length,
+    due:       items.filter(i => i.status === "due").length,
+    overdue:   items.filter(i => i.status === "overdue").length,
+    upcoming:  items.filter(i => i.status === "upcoming").length,
+  }), [items]);
+
+  if (loading) {
+    return <AppShell><Skeleton className="h-40 rounded-2xl" /><div className="mt-6 space-y-4">{[0,1,2].map(i=><Skeleton key={i} className="h-24 rounded-2xl" />)}</div></AppShell>;
+  }
+  if (!child) {
+    return <AppShell><div className="card-soft p-8 text-center text-slate-600">Child not found.</div></AppShell>;
+  }
+
+  return (
+    <AppShell showNotifications>
+      <button data-testid="back-btn" onClick={() => nav(-1)} className="inline-flex items-center gap-2 text-slate-500 hover:text-slate-700 text-sm mb-6">
+        <ArrowLeft className="w-4 h-4" /> Back
+      </button>
+
+      {/* Header */}
+      <div className="card-soft p-6 sm:p-8 relative overflow-hidden">
+        <div className="absolute -right-16 -top-16 w-56 h-56 rounded-full bg-teal-100/50 blur-3xl" />
+        <div className="relative flex flex-col sm:flex-row sm:items-center gap-5">
+          <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-teal-500 to-sky-500 grid place-items-center text-white shrink-0">
+            <User2 className="w-10 h-10" strokeWidth={1.5} />
+          </div>
+          <div className="flex-1">
+            <h1 className="text-3xl font-display tracking-tight text-slate-900">{child.name}</h1>
+            <p className="text-slate-500 mt-1">{child.gender} • {ageString(child.dob)} • Born {new Date(child.dob).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}</p>
+          </div>
+          <div className="sm:text-right">
+            <div className="text-4xl font-display text-teal-700">{pct}%</div>
+            <div className="text-xs text-slate-500 -mt-1">complete</div>
+          </div>
+        </div>
+        <div className="mt-6">
+          <Progress value={pct} className="h-2.5" />
+        </div>
+        <div className="mt-6 grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <StatChip icon={CheckCircle2} label="Completed" value={counts.completed} tint="teal" />
+          <StatChip icon={Clock}        label="Due"       value={counts.due}       tint="amber" />
+          <StatChip icon={AlertTriangle} label="Overdue"  value={counts.overdue}   tint="rose" />
+          <StatChip icon={CalendarDays} label="Upcoming"  value={counts.upcoming}  tint="sky" />
+        </div>
+      </div>
+
+      {/* Timeline */}
+      <div className="mt-10">
+        <h2 className="text-xl font-display tracking-tight text-slate-900">Vaccination timeline</h2>
+        <p className="text-sm text-slate-500 mt-1">India Universal Immunization Programme schedule</p>
+
+        <div className="mt-6 space-y-10">
+          {MILESTONES.filter(m => grouped[m]).map((ms) => (
+            <div key={ms} className="relative pl-14">
+              <div className="timeline-rail" />
+              <h3 className="text-lg font-display text-slate-800 relative">
+                <span className="absolute -left-14 top-0 node-dot bg-white border-teal-600 text-teal-700 font-bold text-sm">
+                  {ms.split(" ")[0]}
+                </span>
+                {ms}
+              </h3>
+              <div className="grid md:grid-cols-2 gap-3 mt-4">
+                {grouped[ms].map((v) => <VaccineCard key={v.code} v={v} />)}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </AppShell>
+  );
+}
+
+function StatChip({ icon: Icon, label, value, tint }) {
+  const map = {
+    teal: "bg-teal-50 text-teal-700",
+    amber: "bg-amber-50 text-amber-700",
+    rose: "bg-rose-50 text-rose-700",
+    sky: "bg-sky-50 text-sky-700",
+  };
+  return (
+    <div className={`rounded-xl px-4 py-3 ${map[tint]} flex items-center gap-3`}>
+      <Icon className="w-5 h-5" strokeWidth={1.75} />
+      <div>
+        <div className="text-lg font-display leading-none">{value}</div>
+        <div className="text-xs opacity-80 mt-0.5">{label}</div>
+      </div>
+    </div>
+  );
+}
+
+function VaccineCard({ v }) {
+  const meta = STATUS_META[v.status];
+  const Icon = meta.icon;
+  const dateLabel = v.record
+    ? `Given on ${new Date(v.record.date_given).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}`
+    : `Due ${v.dueDate.toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}`;
+  return (
+    <div data-testid={`vaccine-${v.code}`} className="card-soft p-4 flex items-start gap-3">
+      <div className={`w-10 h-10 rounded-xl grid place-items-center ${meta.cls}`}>
+        <Icon className="w-5 h-5" strokeWidth={1.75} />
+      </div>
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center justify-between gap-2">
+          <div className="font-semibold text-slate-900 truncate">{v.name}</div>
+          <span className={`text-[10px] font-semibold uppercase tracking-wide rounded-full px-2 py-0.5 ${meta.cls}`}>{meta.label}</span>
+        </div>
+        <div className="text-xs text-slate-500 mt-0.5">{v.dose} • {dateLabel}</div>
+        {v.record && (
+          <div className="mt-2 flex items-center gap-1.5 text-xs text-slate-600">
+            <Stethoscope className="w-3.5 h-3.5" />
+            Dr. {v.record.doctor_name} <span className="text-slate-400">• {v.record.clinic_name}</span>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}

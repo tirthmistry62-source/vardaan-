@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import AppShell from "@/components/AppShell";
+import VaccineInfoDialog from "@/components/VaccineInfoDialog";
 import { api } from "@/lib/api";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
@@ -9,7 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { ArrowLeft, Syringe, CheckCircle2, Clock, AlertTriangle, CalendarDays, User2, History } from "lucide-react";
+import { ArrowLeft, Syringe, CheckCircle2, Clock, AlertTriangle, CalendarDays, User2, History, Info } from "lucide-react";
 import { computeVaccineStatuses, completionPercent, ageString } from "@/lib/vaccineStatus";
 
 const STATUS_META = {
@@ -27,6 +28,7 @@ export default function DoctorChildRecord() {
   const [selected, setSelected] = useState(new Set());
   const [saving, setSaving] = useState(false);
   const [success, setSuccess] = useState(null);
+  const [infoVaccine, setInfoVaccine] = useState(null);
 
   const load = async () => {
     setLoading(true);
@@ -118,20 +120,20 @@ export default function DoctorChildRecord() {
         </TabsList>
 
         <TabsContent value="due" className="mt-6">
-          <p className="text-sm text-slate-500 mb-4">Select the vaccines you&apos;re administering today. Parents will be notified instantly.</p>
-          <VaccineList items={dueItems} selected={selected} onToggle={toggle} emptyText="No due or overdue vaccines. Great work!" selectable />
+          <p className="text-sm text-slate-500 mb-4">Select the vaccines you&apos;re administering today. Parents will be notified instantly. Tap the info icon on any card to see vaccine details.</p>
+          <VaccineList items={dueItems} selected={selected} onToggle={toggle} onInfo={setInfoVaccine} emptyText="No due or overdue vaccines. Great work!" selectable />
         </TabsContent>
 
         <TabsContent value="history" className="mt-6">
           <div className="flex items-center gap-2 text-sm text-slate-500 mb-4">
             <History className="w-4 h-4" /> Past vaccinations already recorded for {child.name}.
           </div>
-          <VaccineList items={completedItems} selected={selected} onToggle={toggle} emptyText="No vaccinations recorded yet." />
+          <VaccineList items={completedItems} selected={selected} onToggle={toggle} onInfo={setInfoVaccine} emptyText="No vaccinations recorded yet." />
         </TabsContent>
 
         <TabsContent value="all" className="mt-6">
           <p className="text-sm text-slate-500 mb-4">Complete UIP schedule — completed, due, overdue, and upcoming.</p>
-          <VaccineList items={items} selected={selected} onToggle={toggle} emptyText="No schedule." selectable />
+          <VaccineList items={items} selected={selected} onToggle={toggle} onInfo={setInfoVaccine} emptyText="No schedule." selectable />
         </TabsContent>
       </Tabs>
 
@@ -172,12 +174,18 @@ export default function DoctorChildRecord() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <VaccineInfoDialog
+        vaccine={infoVaccine}
+        open={!!infoVaccine}
+        onOpenChange={(o) => { if (!o) setInfoVaccine(null); }}
+      />
     </AppShell>
   );
 }
 
 
-function VaccineList({ items, selected, onToggle, emptyText, selectable = false }) {
+function VaccineList({ items, selected, onToggle, onInfo, emptyText, selectable = false }) {
   if (items.length === 0) {
     return <div className="card-soft p-6 text-center text-slate-500">{emptyText}</div>;
   }
@@ -193,20 +201,34 @@ function VaccineList({ items, selected, onToggle, emptyText, selectable = false 
           ? `Given ${new Date(v.record.date_given).toLocaleDateString("en-IN")}`
           : `Due ${v.dueDate.toLocaleDateString("en-IN")}`;
         return (
-          <label
+          <div
             key={v.code}
             data-testid={`doc-vaccine-${v.code}`}
-            className={`card-soft p-4 flex items-start gap-3 ${showCheckbox ? "cursor-pointer" : ""} ${checked ? "ring-2 ring-teal-500 border-teal-500" : ""}`}
+            className={`card-soft p-4 flex items-start gap-3 ${checked ? "ring-2 ring-teal-500 border-teal-500" : ""}`}
           >
             {showCheckbox && (
-              <Checkbox data-testid={`doc-check-${v.code}`} checked={checked} onCheckedChange={() => onToggle(v.code)} className="mt-1" />
+              <Checkbox
+                data-testid={`doc-check-${v.code}`}
+                checked={checked}
+                onCheckedChange={() => onToggle(v.code)}
+                className="mt-1"
+              />
             )}
-            <div className={`w-10 h-10 rounded-xl grid place-items-center ${meta.cls}`}>
+            <div className={`w-10 h-10 rounded-xl grid place-items-center ${meta.cls} shrink-0`}>
               <Icon className="w-5 h-5" />
             </div>
-            <div className="flex-1 min-w-0">
+            <button
+              type="button"
+              onClick={() => onInfo(v)}
+              data-testid={`doc-info-${v.code}`}
+              className="flex-1 min-w-0 text-left cursor-pointer group"
+              aria-label={`View info about ${v.name}`}
+            >
               <div className="flex items-center justify-between gap-2">
-                <div className="font-semibold text-slate-900 truncate">{v.name}</div>
+                <div className="font-semibold text-slate-900 truncate flex items-center gap-1.5">
+                  {v.name}
+                  <Info className="w-3.5 h-3.5 text-slate-300 group-hover:text-teal-600 transition-colors" />
+                </div>
                 <span className={`text-[10px] font-semibold uppercase tracking-wide rounded-full px-2 py-0.5 ${meta.cls}`}>{meta.label}</span>
               </div>
               <div className="text-xs text-slate-500 mt-0.5">{v.dose} • {v.milestone} • {dateLabel}</div>
@@ -215,8 +237,8 @@ function VaccineList({ items, selected, onToggle, emptyText, selectable = false 
                   Dr. {v.record.doctor_name} <span className="text-slate-400">• {v.record.clinic_name}</span>
                 </div>
               )}
-            </div>
-          </label>
+            </button>
+          </div>
         );
       })}
     </div>

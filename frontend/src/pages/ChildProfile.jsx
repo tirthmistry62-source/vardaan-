@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import AppShell from "@/components/AppShell";
+import VaccineInfoDialog from "@/components/VaccineInfoDialog";
 import { api } from "@/lib/api";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Progress } from "@/components/ui/progress";
-import { Pencil, CheckCircle2, Clock, AlertTriangle, CalendarDays, User2, Stethoscope } from "lucide-react";
+import { Pencil, CheckCircle2, Clock, AlertTriangle, CalendarDays, User2, Stethoscope, Info } from "lucide-react";
 import { computeVaccineStatuses, completionPercent, ageString } from "@/lib/vaccineStatus";
 import { MILESTONES } from "@/lib/vaccineSchedule";
 
@@ -19,6 +20,7 @@ export default function ChildProfile() {
   const { id } = useParams();
   const [child, setChild] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [selectedVaccine, setSelectedVaccine] = useState(null);
 
   useEffect(() => {
     (async () => {
@@ -110,12 +112,18 @@ export default function ChildProfile() {
                 {ms}
               </h3>
               <div className="grid md:grid-cols-2 gap-3 mt-4">
-                {grouped[ms].map((v) => <VaccineCard key={v.code} v={v} />)}
+                {grouped[ms].map((v) => <VaccineCard key={v.code} v={v} onOpen={() => setSelectedVaccine(v)} />)}
               </div>
             </div>
           ))}
         </div>
       </div>
+
+      <VaccineInfoDialog
+        vaccine={selectedVaccine}
+        open={!!selectedVaccine}
+        onOpenChange={(o) => { if (!o) setSelectedVaccine(null); }}
+      />
     </AppShell>
   );
 }
@@ -138,20 +146,28 @@ function StatChip({ icon: Icon, label, value, tint }) {
   );
 }
 
-function VaccineCard({ v }) {
+function VaccineCard({ v, onOpen }) {
   const meta = STATUS_META[v.status];
   const Icon = meta.icon;
   const dateLabel = v.record
     ? `Given on ${new Date(v.record.date_given).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}`
     : `Due ${v.dueDate.toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}`;
   return (
-    <div data-testid={`vaccine-${v.code}`} className="card-soft p-4 flex items-start gap-3">
-      <div className={`w-10 h-10 rounded-xl grid place-items-center ${meta.cls}`}>
+    <button
+      type="button"
+      data-testid={`vaccine-${v.code}`}
+      onClick={onOpen}
+      className="card-soft hover-lift tap-scale p-4 flex items-start gap-3 text-left w-full cursor-pointer group"
+    >
+      <div className={`w-10 h-10 rounded-xl grid place-items-center ${meta.cls} shrink-0`}>
         <Icon className="w-5 h-5" strokeWidth={1.75} />
       </div>
       <div className="flex-1 min-w-0">
         <div className="flex items-center justify-between gap-2">
-          <div className="font-semibold text-slate-900 truncate">{v.name}</div>
+          <div className="font-semibold text-slate-900 truncate flex items-center gap-1.5">
+            {v.name}
+            <Info className="w-3.5 h-3.5 text-slate-300 group-hover:text-teal-600 transition-colors" />
+          </div>
           <span className={`text-[10px] font-semibold uppercase tracking-wide rounded-full px-2 py-0.5 ${meta.cls}`}>{meta.label}</span>
         </div>
         <div className="text-xs text-slate-500 mt-0.5">{v.dose} • {dateLabel}</div>
@@ -162,6 +178,6 @@ function VaccineCard({ v }) {
           </div>
         )}
       </div>
-    </div>
+    </button>
   );
 }

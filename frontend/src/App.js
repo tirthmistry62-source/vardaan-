@@ -10,7 +10,9 @@ import ParentRegister from "@/pages/ParentRegister";
 import ParentDashboard from "@/pages/ParentDashboard";
 import AddChild from "@/pages/AddChild";
 import ChildProfile from "@/pages/ChildProfile";
+import EditChild from "@/pages/EditChild";
 import ParentNotifications from "@/pages/ParentNotifications";
+import ParentSettings from "@/pages/ParentSettings";
 import DoctorLogin from "@/pages/DoctorLogin";
 import DoctorRegister from "@/pages/DoctorRegister";
 import DoctorDashboard from "@/pages/DoctorDashboard";
@@ -34,8 +36,10 @@ function App() {
           <Route path="/parent/login" element={<ParentLogin />} />
           <Route path="/parent/register" element={<ParentRegister />} />
           <Route path="/parent/dashboard" element={<RequireRole role="parent"><ParentDashboard /></RequireRole>} />
+          <Route path="/parent/settings" element={<RequireRole role="parent"><ParentSettings /></RequireRole>} />
           <Route path="/parent/add-child" element={<RequireRole role="parent"><AddChild /></RequireRole>} />
           <Route path="/parent/child/:id" element={<RequireRole role="parent"><ChildProfile /></RequireRole>} />
+          <Route path="/parent/child/:id/edit" element={<RequireRole role="parent"><EditChild /></RequireRole>} />
           <Route path="/parent/notifications" element={<RequireRole role="parent"><ParentNotifications /></RequireRole>} />
 
           <Route path="/doctor/login" element={<DoctorLogin />} />

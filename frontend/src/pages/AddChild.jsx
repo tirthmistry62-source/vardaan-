@@ -54,7 +54,7 @@ export default function AddChild() {
   };
 
   return (
-    <AppShell>
+    <AppShell showBack backTo="/parent/dashboard">
       <button data-testid="back-btn" onClick={() => nav(-1)} className="inline-flex items-center gap-2 text-slate-500 hover:text-slate-700 text-sm mb-6">
         <ArrowLeft className="w-4 h-4" /> Back
       </button>

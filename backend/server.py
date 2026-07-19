@@ -109,6 +109,21 @@ class VaccinationRecordIn(BaseModel):
     child_id: str
     entries: List[dict]  # [{vaccine_code, vaccine_name, dose, remarks}]
 
+class ParentUpdateIn(BaseModel):
+    full_name: Optional[str] = None
+    phone: Optional[str] = None
+
+class ChildUpdateIn(BaseModel):
+    name: Optional[str] = None
+    dob: Optional[str] = None
+    gender: Optional[str] = None
+    mother_aadhaar: Optional[str] = None
+    father_aadhaar: Optional[str] = None
+    child_aadhaar: Optional[str] = None
+
+class ConfirmDeleteIn(BaseModel):
+    confirm_phrase: str
+
 # ------------- Validation -------------
 
 def valid_aadhaar(a: str) -> bool:
@@ -327,6 +342,111 @@ async def record_vaccinations(body: VaccinationRecordIn, cur=Depends(require_doc
                 await db.notifications.insert_one(notif)
 
     return {'created': created}
+
+# ------------- Parent profile update / delete -------------
+
+@api.patch('/parent/me')
+async def parent_update(body: ParentUpdateIn, cur=Depends(require_parent)):
+    updates = {}
+    if body.full_name is not None:
+        name = body.full_name.strip()
+        if not name:
+            raise HTTPException(400, "Name cannot be empty")
+        updates['full_name'] = name
+    if body.phone is not None:
+        if not valid_phone(body.phone):
+            raise HTTPException(400, "Invalid phone number")
+        existing = await db.parents.find_one({'phone': body.phone, 'id': {'$ne': cur['user_id']}})
+        if existing:
+            raise HTTPException(409, "Phone already registered")
+        updates['phone'] = body.phone
+    if not updates:
+        raise HTTPException(400, "Nothing to update")
+    await db.parents.update_one({'id': cur['user_id']}, {'$set': updates})
+    p = await db.parents.find_one({'id': cur['user_id']}, {'_id': 0, 'password_hash': 0})
+    return p
+
+CONFIRM_DELETE_PARENT = "DELETE MY ACCOUNT"
+
+@api.post('/parent/me/delete')
+async def parent_delete(body: ConfirmDeleteIn, cur=Depends(require_parent)):
+    if body.confirm_phrase.strip() != CONFIRM_DELETE_PARENT:
+        raise HTTPException(400, f'You must type exactly: "{CONFIRM_DELETE_PARENT}"')
+    parent = await db.parents.find_one({'id': cur['user_id']})
+    if not parent:
+        raise HTTPException(404, "Parent not found")
+    my_aadhaar = parent['aadhaar']
+    # For each linked child, unlink me — if no other parent aadhaar remains, delete the child.
+    kids = await db.children.find({'$or': [{'mother_aadhaar': my_aadhaar}, {'father_aadhaar': my_aadhaar}]}).to_list(1000)
+    for k in kids:
+        mother = k.get('mother_aadhaar') if k.get('mother_aadhaar') != my_aadhaar else None
+        father = k.get('father_aadhaar') if k.get('father_aadhaar') != my_aadhaar else None
+        if mother or father:
+            await db.children.update_one({'id': k['id']}, {'$set': {'mother_aadhaar': mother, 'father_aadhaar': father}})
+        else:
+            await db.children.delete_one({'id': k['id']})
+            await db.vaccinations.delete_many({'child_id': k['id']})
+    await db.notifications.delete_many({'parent_id': cur['user_id']})
+    await db.parents.delete_one({'id': cur['user_id']})
+    return {'ok': True}
+
+# ------------- Child update / delete -------------
+
+async def _assert_parent_owns_child(parent_id: str, child_id: str):
+    parent = await db.parents.find_one({'id': parent_id})
+    child = await db.children.find_one({'id': child_id})
+    if not child:
+        raise HTTPException(404, "Child not found")
+    if parent['aadhaar'] not in (child.get('mother_aadhaar'), child.get('father_aadhaar')):
+        raise HTTPException(403, "Not your child")
+    return parent, child
+
+@api.patch('/parent/children/{child_id}')
+async def child_update(child_id: str, body: ChildUpdateIn, cur=Depends(require_parent)):
+    parent, child = await _assert_parent_owns_child(cur['user_id'], child_id)
+    updates = {}
+    if body.name is not None:
+        if not body.name.strip():
+            raise HTTPException(400, "Name cannot be empty")
+        updates['name'] = body.name.strip()
+    if body.dob is not None:
+        updates['dob'] = body.dob
+    if body.gender is not None:
+        if body.gender not in ("Male", "Female", "Other"):
+            raise HTTPException(400, "Invalid gender")
+        updates['gender'] = body.gender
+    for fld in ('mother_aadhaar', 'father_aadhaar', 'child_aadhaar'):
+        val = getattr(body, fld)
+        if val is not None:
+            if val == "":
+                updates[fld] = None
+            elif not valid_aadhaar(val):
+                raise HTTPException(400, "Aadhaar must be 12 digits")
+            else:
+                updates[fld] = val
+    # After change, parent must still own the child
+    new_mother = updates.get('mother_aadhaar', child.get('mother_aadhaar'))
+    new_father = updates.get('father_aadhaar', child.get('father_aadhaar'))
+    if parent['aadhaar'] not in (new_mother, new_father):
+        raise HTTPException(400, "Your Aadhaar must remain as mother's or father's Aadhaar")
+    if not updates:
+        raise HTTPException(400, "Nothing to update")
+    await db.children.update_one({'id': child_id}, {'$set': updates})
+    fresh = await db.children.find_one({'id': child_id}, {'_id': 0})
+    return await _child_public(fresh)
+
+CONFIRM_DELETE_CHILD_TEMPLATE = 'Yes, I want to delete {name}\'s account, and I approve that the vaccination details and history will be permanently deleted and cannot be recovered.'
+
+@api.post('/parent/children/{child_id}/delete')
+async def child_delete(child_id: str, body: ConfirmDeleteIn, cur=Depends(require_parent)):
+    parent, child = await _assert_parent_owns_child(cur['user_id'], child_id)
+    expected = CONFIRM_DELETE_CHILD_TEMPLATE.format(name=child['name'])
+    if body.confirm_phrase.strip() != expected:
+        raise HTTPException(400, f'You must type exactly: "{expected}"')
+    await db.children.delete_one({'id': child_id})
+    await db.vaccinations.delete_many({'child_id': child_id})
+    await db.notifications.delete_many({'child_id': child_id})
+    return {'ok': True}
 
 # ------------- Notifications -------------
 

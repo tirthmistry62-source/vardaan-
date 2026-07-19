@@ -14,14 +14,19 @@ Build a modern PWA for lifelong vaccination record management. Two roles: Parent
 
 ## Phase 1 — Delivered (Jul 2026)
 1. **Parent auth** — register/login with Aadhaar (12-digit username) + password. Duplicate Aadhaar/phone rejected.
-2. **Doctor auth** — register/login with phone + password. Self-registration, no approval.
-3. **Parent dashboard** — Add Child + child cards (photo placeholder, name, age, gender, DOB, progress %).
-4. **Child Profile** — Full UIP schedule (28 vaccines, milestones from Birth → 16y) with auto-computed color-coded status: green completed, amber due, red overdue, sky upcoming. Grouped by milestone with timeline rail.
-5. **Doctor Aadhaar search** — Detects parent vs child, returns linked family, opens child record.
-6. **Doctor records vaccination** — Multi-select due vaccines, sticky action bar, animated success dialog with checkmark.
-7. **Auto-link** — Same child auto-visible to BOTH parents via mother/father Aadhaar match.
-8. **Notifications** — Both parents receive an in-app notification each time doctor records a vaccine; bell shows unread badge.
-9. **Access control** — Parents can only access their own children (403 otherwise); routes guarded by role.
+2. **Doctor auth** — register/login with phone + password. Self-registration, no approval. Name input has a locked "Dr." prefix.
+3. **Parent dashboard** — Add Child + child cards (photo placeholder, name, age, gender, DOB, progress %). Header shows Settings, Notifications, Logout.
+4. **Parent Settings** — edit full name + phone, view masked Aadhaar (read-only), delete account with double confirmation (warning + typed phrase "DELETE MY ACCOUNT").
+5. **Edit Child** — edit name, DOB, gender; delete child with double confirmation (warning + typed long-form phrase).
+6. **Child Profile** — Full UIP schedule with auto-computed color-coded status; Edit Child button in header.
+7. **Doctor Aadhaar search** — Detects parent vs child, returns linked family, opens child record.
+8. **Doctor Child Record** — Three tabs: Due & Overdue / History (completed) / All. History tab shows past vaccinations with doctor + clinic name.
+9. **Doctor records vaccination** — Multi-select due vaccines, sticky action bar, animated success dialog with checkmark.
+10. **Cascade behavior** — Deleting a parent unlinks that parent from children; child remains accessible from the other parent if any Aadhaar is set, otherwise deleted with all vaccinations.
+11. **Back buttons** — Header back button on Settings, Edit Child, Add Child, Child Profile, Notifications, Doctor Child Record. Auth pages have "Back to role selection" / "Back to login" links.
+12. **Auto-link** — Same child auto-visible to BOTH parents via mother/father Aadhaar match.
+13. **Notifications** — Both parents receive an in-app notification each time doctor records a vaccine.
+14. **Access control** — Parents can only access their own children; routes guarded by role.
 
 ## Phase 2 — Backlog (Deferred)
 ### P0

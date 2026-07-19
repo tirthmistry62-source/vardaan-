@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { api, setSession } from "@/lib/api";
-import { Loader2 } from "lucide-react";
+import { Loader2, ArrowLeft } from "lucide-react";
 
 export default function ParentRegister() {
   const nav = useNavigate();
@@ -43,6 +43,9 @@ export default function ParentRegister() {
   return (
     <div className="min-h-screen aurora-bg flex items-center justify-center p-6">
       <form onSubmit={submit} className="w-full max-w-md card-soft p-8">
+        <Link to="/parent/login" data-testid="back-to-login" className="inline-flex items-center gap-2 text-sm text-slate-500 hover:text-slate-700 mb-6">
+          <ArrowLeft className="w-4 h-4" /> Back to login
+        </Link>
         <h1 className="text-3xl font-display tracking-tight text-slate-900">Create Parent Account</h1>
         <p className="mt-2 text-slate-500 text-sm">Your Aadhaar acts as your username. Only you and your co-parent will see your children's records.</p>
 

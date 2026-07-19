@@ -22,7 +22,7 @@ export default function ParentNotifications() {
   }, []);
 
   return (
-    <AppShell>
+    <AppShell showBack backTo="/parent/dashboard">
       <div className="flex items-center gap-3 mb-6">
         <div className="w-11 h-11 rounded-2xl bg-teal-50 text-teal-700 grid place-items-center">
           <Bell className="w-5 h-5" />

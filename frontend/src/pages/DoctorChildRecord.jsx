@@ -8,7 +8,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
-import { ArrowLeft, Syringe, CheckCircle2, Clock, AlertTriangle, CalendarDays, User2 } from "lucide-react";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { ArrowLeft, Syringe, CheckCircle2, Clock, AlertTriangle, CalendarDays, User2, History } from "lucide-react";
 import { computeVaccineStatuses, completionPercent, ageString } from "@/lib/vaccineStatus";
 
 const STATUS_META = {
@@ -26,7 +27,6 @@ export default function DoctorChildRecord() {
   const [selected, setSelected] = useState(new Set());
   const [saving, setSaving] = useState(false);
   const [success, setSuccess] = useState(null);
-  const [showAll, setShowAll] = useState(false);
 
   const load = async () => {
     setLoading(true);
@@ -42,7 +42,8 @@ export default function DoctorChildRecord() {
 
   const items = useMemo(() => child ? computeVaccineStatuses(child.dob, child.vaccinations) : [], [child]);
   const dueItems = items.filter(i => i.status === "due" || i.status === "overdue");
-  const visible = showAll ? items.filter(i => i.status !== "completed") : dueItems;
+  const completedItems = items.filter(i => i.status === "completed");
+  const upcomingItems = items.filter(i => i.status === "upcoming");
   const pct = child ? completionPercent(child.dob, child.vaccinations) : 0;
 
   const toggle = (code) => {
@@ -73,7 +74,7 @@ export default function DoctorChildRecord() {
   if (!child) return <AppShell><div className="card-soft p-8 text-center text-slate-600">Child not found.</div></AppShell>;
 
   return (
-    <AppShell>
+    <AppShell showBack backTo="/doctor/dashboard">
       <button data-testid="back-btn" onClick={() => nav(-1)} className="inline-flex items-center gap-2 text-slate-500 hover:text-slate-700 text-sm mb-6">
         <ArrowLeft className="w-4 h-4" /> Back to search
       </button>
@@ -93,49 +94,46 @@ export default function DoctorChildRecord() {
           </div>
         </div>
         <Progress value={pct} className="h-2 mt-6" />
-      </div>
-
-      <div className="mt-8 flex items-center justify-between">
-        <div>
-          <h2 className="text-xl font-display text-slate-900">{showAll ? "All pending vaccines" : "Due & overdue"}</h2>
-          <p className="text-sm text-slate-500 mt-1">Select the vaccines you're administering today.</p>
-        </div>
-        <button data-testid="toggle-show-all" onClick={() => setShowAll(v => !v)} className="text-sm text-sky-700 hover:underline font-medium">
-          {showAll ? "Show only due" : "Show all pending"}
-        </button>
-      </div>
-
-      <div className="mt-4 grid md:grid-cols-2 gap-3">
-        {visible.length === 0 && (
-          <div className="col-span-full card-soft p-6 text-center text-slate-500">
-            No {showAll ? "pending" : "due"} vaccines. Great work!
+        <div className="mt-4 grid grid-cols-3 gap-2 text-sm">
+          <div className="rounded-lg bg-teal-50 text-teal-700 px-3 py-2 text-center">
+            <div className="font-display text-lg leading-none">{completedItems.length}</div>
+            <div className="text-xs mt-1">Completed</div>
           </div>
-        )}
-        {visible.map(v => {
-          const meta = STATUS_META[v.status];
-          const Icon = meta.icon;
-          const checked = selected.has(v.code);
-          return (
-            <label
-              key={v.code}
-              data-testid={`doc-vaccine-${v.code}`}
-              className={`card-soft p-4 flex items-start gap-3 cursor-pointer ${checked ? "ring-2 ring-teal-500 border-teal-500" : ""}`}
-            >
-              <Checkbox data-testid={`doc-check-${v.code}`} checked={checked} onCheckedChange={() => toggle(v.code)} className="mt-1" />
-              <div className={`w-10 h-10 rounded-xl grid place-items-center ${meta.cls}`}>
-                <Icon className="w-5 h-5" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center justify-between gap-2">
-                  <div className="font-semibold text-slate-900 truncate">{v.name}</div>
-                  <span className={`text-[10px] font-semibold uppercase tracking-wide rounded-full px-2 py-0.5 ${meta.cls}`}>{meta.label}</span>
-                </div>
-                <div className="text-xs text-slate-500 mt-0.5">{v.dose} • {v.milestone} • Due {v.dueDate.toLocaleDateString("en-IN")}</div>
-              </div>
-            </label>
-          );
-        })}
+          <div className="rounded-lg bg-amber-50 text-amber-700 px-3 py-2 text-center">
+            <div className="font-display text-lg leading-none">{dueItems.length}</div>
+            <div className="text-xs mt-1">Due / Overdue</div>
+          </div>
+          <div className="rounded-lg bg-sky-50 text-sky-700 px-3 py-2 text-center">
+            <div className="font-display text-lg leading-none">{upcomingItems.length}</div>
+            <div className="text-xs mt-1">Upcoming</div>
+          </div>
+        </div>
       </div>
+
+      <Tabs defaultValue="due" className="mt-8">
+        <TabsList data-testid="doc-tabs" className="rounded-full h-11 bg-slate-100 p-1">
+          <TabsTrigger value="due" data-testid="tab-due" className="rounded-full px-4 h-9 data-[state=active]:bg-white data-[state=active]:shadow-sm">Due & Overdue ({dueItems.length})</TabsTrigger>
+          <TabsTrigger value="history" data-testid="tab-history" className="rounded-full px-4 h-9 data-[state=active]:bg-white data-[state=active]:shadow-sm">History ({completedItems.length})</TabsTrigger>
+          <TabsTrigger value="all" data-testid="tab-all" className="rounded-full px-4 h-9 data-[state=active]:bg-white data-[state=active]:shadow-sm">All ({items.length})</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="due" className="mt-6">
+          <p className="text-sm text-slate-500 mb-4">Select the vaccines you&apos;re administering today. Parents will be notified instantly.</p>
+          <VaccineList items={dueItems} selected={selected} onToggle={toggle} emptyText="No due or overdue vaccines. Great work!" selectable />
+        </TabsContent>
+
+        <TabsContent value="history" className="mt-6">
+          <div className="flex items-center gap-2 text-sm text-slate-500 mb-4">
+            <History className="w-4 h-4" /> Past vaccinations already recorded for {child.name}.
+          </div>
+          <VaccineList items={completedItems} selected={selected} onToggle={toggle} emptyText="No vaccinations recorded yet." />
+        </TabsContent>
+
+        <TabsContent value="all" className="mt-6">
+          <p className="text-sm text-slate-500 mb-4">Complete UIP schedule — completed, due, overdue, and upcoming.</p>
+          <VaccineList items={items} selected={selected} onToggle={toggle} emptyText="No schedule." selectable />
+        </TabsContent>
+      </Tabs>
 
       {selected.size > 0 && (
         <div className="sticky bottom-4 mt-8 z-30">
@@ -164,7 +162,7 @@ export default function DoctorChildRecord() {
             <DialogTitle className="text-2xl font-display text-center mt-4">Recorded</DialogTitle>
           </DialogHeader>
           <p className="text-sm text-slate-500">
-            {success?.count} vaccine{success?.count > 1 ? "s" : ""} saved to {child.name}'s record.
+            {success?.count} vaccine{success?.count > 1 ? "s" : ""} saved to {child.name}&apos;s record.
           </p>
           <ul className="mt-3 text-sm text-slate-700 space-y-1">
             {success?.names?.map((n, i) => <li key={i}>• {n}</li>)}
@@ -175,5 +173,52 @@ export default function DoctorChildRecord() {
         </DialogContent>
       </Dialog>
     </AppShell>
+  );
+}
+
+
+function VaccineList({ items, selected, onToggle, emptyText, selectable = false }) {
+  if (items.length === 0) {
+    return <div className="card-soft p-6 text-center text-slate-500">{emptyText}</div>;
+  }
+  return (
+    <div className="grid md:grid-cols-2 gap-3">
+      {items.map(v => {
+        const meta = STATUS_META[v.status];
+        const Icon = meta.icon;
+        const isCompleted = v.status === "completed";
+        const checked = selected.has(v.code);
+        const showCheckbox = selectable && !isCompleted;
+        const dateLabel = isCompleted && v.record
+          ? `Given ${new Date(v.record.date_given).toLocaleDateString("en-IN")}`
+          : `Due ${v.dueDate.toLocaleDateString("en-IN")}`;
+        return (
+          <label
+            key={v.code}
+            data-testid={`doc-vaccine-${v.code}`}
+            className={`card-soft p-4 flex items-start gap-3 ${showCheckbox ? "cursor-pointer" : ""} ${checked ? "ring-2 ring-teal-500 border-teal-500" : ""}`}
+          >
+            {showCheckbox && (
+              <Checkbox data-testid={`doc-check-${v.code}`} checked={checked} onCheckedChange={() => onToggle(v.code)} className="mt-1" />
+            )}
+            <div className={`w-10 h-10 rounded-xl grid place-items-center ${meta.cls}`}>
+              <Icon className="w-5 h-5" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center justify-between gap-2">
+                <div className="font-semibold text-slate-900 truncate">{v.name}</div>
+                <span className={`text-[10px] font-semibold uppercase tracking-wide rounded-full px-2 py-0.5 ${meta.cls}`}>{meta.label}</span>
+              </div>
+              <div className="text-xs text-slate-500 mt-0.5">{v.dose} • {v.milestone} • {dateLabel}</div>
+              {isCompleted && v.record && (
+                <div className="mt-2 text-xs text-slate-600">
+                  Dr. {v.record.doctor_name} <span className="text-slate-400">• {v.record.clinic_name}</span>
+                </div>
+              )}
+            </div>
+          </label>
+        );
+      })}
+    </div>
   );
 }

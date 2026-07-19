@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { api, setSession } from "@/lib/api";
-import { Loader2 } from "lucide-react";
+import { Loader2, ArrowLeft } from "lucide-react";
 
 export default function DoctorRegister() {
   const nav = useNavigate();
@@ -37,11 +37,25 @@ export default function DoctorRegister() {
   return (
     <div className="min-h-screen aurora-bg flex items-center justify-center p-6">
       <form onSubmit={submit} className="w-full max-w-md card-soft p-8">
+        <Link to="/doctor/login" data-testid="back-to-login" className="inline-flex items-center gap-2 text-sm text-slate-500 hover:text-slate-700 mb-6">
+          <ArrowLeft className="w-4 h-4" /> Back to login
+        </Link>
         <h1 className="text-3xl font-display tracking-tight text-slate-900">Create Doctor Account</h1>
         <p className="mt-2 text-slate-500 text-sm">Self-registration. No approval needed.</p>
         <div className="mt-8 grid gap-5">
           <div><Label>Doctor name</Label>
-            <Input data-testid="dr-name" value={form.doctor_name} onChange={upd("doctor_name")} placeholder="e.g. Anjali Verma" className="mt-2 h-12 rounded-xl" /></div>
+            <div className="mt-2 flex items-stretch rounded-xl border border-slate-300 focus-within:ring-2 focus-within:ring-teal-500/20 focus-within:border-teal-600 overflow-hidden bg-white">
+              <span className="px-4 flex items-center bg-slate-50 text-slate-500 font-semibold border-r border-slate-200 select-none">Dr.</span>
+              <Input
+                data-testid="dr-name"
+                value={form.doctor_name}
+                onChange={upd("doctor_name")}
+                placeholder="e.g. Anjali Verma"
+                className="flex-1 h-12 border-0 rounded-none focus-visible:ring-0 focus-visible:ring-offset-0 shadow-none"
+              />
+            </div>
+            <p className="text-xs text-slate-500 mt-1.5">Just your name — the "Dr." title is added automatically.</p>
+          </div>
           <div className="grid grid-cols-2 gap-3">
             <div><Label>Phone</Label>
               <Input data-testid="dr-phone" inputMode="numeric" value={form.phone}

@@ -1,10 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import AppShell from "@/components/AppShell";
 import { api } from "@/lib/api";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Progress } from "@/components/ui/progress";
-import { ArrowLeft, CheckCircle2, Clock, AlertTriangle, CalendarDays, User2, Stethoscope } from "lucide-react";
+import { Pencil, CheckCircle2, Clock, AlertTriangle, CalendarDays, User2, Stethoscope } from "lucide-react";
 import { computeVaccineStatuses, completionPercent, ageString } from "@/lib/vaccineStatus";
 import { MILESTONES } from "@/lib/vaccineSchedule";
 
@@ -16,7 +16,6 @@ const STATUS_META = {
 };
 
 export default function ChildProfile() {
-  const nav = useNavigate();
   const { id } = useParams();
   const [child, setChild] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -50,17 +49,23 @@ export default function ChildProfile() {
   }), [items]);
 
   if (loading) {
-    return <AppShell><Skeleton className="h-40 rounded-2xl" /><div className="mt-6 space-y-4">{[0,1,2].map(i=><Skeleton key={i} className="h-24 rounded-2xl" />)}</div></AppShell>;
+    return <AppShell showBack backTo="/parent/dashboard"><Skeleton className="h-40 rounded-2xl" /><div className="mt-6 space-y-4">{[0,1,2].map(i=><Skeleton key={i} className="h-24 rounded-2xl" />)}</div></AppShell>;
   }
   if (!child) {
-    return <AppShell><div className="card-soft p-8 text-center text-slate-600">Child not found.</div></AppShell>;
+    return <AppShell showBack backTo="/parent/dashboard"><div className="card-soft p-8 text-center text-slate-600">Child not found.</div></AppShell>;
   }
 
   return (
-    <AppShell showNotifications>
-      <button data-testid="back-btn" onClick={() => nav(-1)} className="inline-flex items-center gap-2 text-slate-500 hover:text-slate-700 text-sm mb-6">
-        <ArrowLeft className="w-4 h-4" /> Back
-      </button>
+    <AppShell showNotifications showBack backTo="/parent/dashboard">
+      <div className="flex items-center justify-end mb-4">
+        <Link
+          to={`/parent/child/${child.id}/edit`}
+          data-testid="edit-child-link"
+          className="inline-flex items-center gap-2 text-sm font-medium text-teal-700 hover:underline"
+        >
+          <Pencil className="w-4 h-4" /> Edit child
+        </Link>
+      </div>
 
       {/* Header */}
       <div className="card-soft p-6 sm:p-8 relative overflow-hidden">

@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { api, setSession } from "@/lib/api";
-import { HeartPulse, Loader2 } from "lucide-react";
+import { HeartPulse, Loader2, ArrowLeft } from "lucide-react";
 
 export default function ParentLogin() {
   const nav = useNavigate();
@@ -45,6 +45,9 @@ export default function ParentLogin() {
 
       <div className="flex items-center justify-center p-6">
         <form onSubmit={submit} className="w-full max-w-md card-soft p-8">
+          <Link to="/select-role" data-testid="back-to-roles" className="inline-flex items-center gap-2 text-sm text-slate-500 hover:text-slate-700 mb-6">
+            <ArrowLeft className="w-4 h-4" /> Back to role selection
+          </Link>
           <h1 className="text-3xl font-display tracking-tight text-slate-900">Parent Login</h1>
           <p className="mt-2 text-slate-500 text-sm">Sign in with your Aadhaar to access your children's records.</p>
 

@@ -1,5 +1,6 @@
 import "@/App.css";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
+import { AnimatePresence, motion } from "framer-motion";
 import { Toaster } from "sonner";
 import { getSession } from "@/lib/api";
 
@@ -25,12 +26,18 @@ function RequireRole({ role, children }) {
   return children;
 }
 
-function App() {
+function AnimatedRoutes() {
+  const location = useLocation();
   return (
-    <div className="App">
-      <BrowserRouter>
-        <Toaster richColors position="top-center" />
-        <Routes>
+    <AnimatePresence mode="wait" initial={false}>
+      <motion.div
+        key={location.pathname}
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: -6 }}
+        transition={{ duration: 0.22, ease: [0.2, 0.8, 0.2, 1] }}
+      >
+        <Routes location={location}>
           <Route path="/" element={<Landing />} />
           <Route path="/select-role" element={<SelectRole />} />
 
@@ -51,6 +58,17 @@ function App() {
 
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
+      </motion.div>
+    </AnimatePresence>
+  );
+}
+
+function App() {
+  return (
+    <div className="App">
+      <BrowserRouter>
+        <Toaster richColors position="top-center" />
+        <AnimatedRoutes />
       </BrowserRouter>
     </div>
   );

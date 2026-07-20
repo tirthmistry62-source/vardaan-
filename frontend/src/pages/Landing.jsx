@@ -10,7 +10,7 @@ export default function Landing() {
       if (s?.role === "parent") nav("/parent/dashboard", { replace: true });
       else if (s?.role === "doctor") nav("/doctor/dashboard", { replace: true });
       else nav("/select-role", { replace: true });
-    }, 900);
+    }, 2000);
     return () => clearTimeout(t);
   }, [nav]);
 

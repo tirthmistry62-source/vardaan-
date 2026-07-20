@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import AppShell from "@/components/AppShell";
 import VaccineInfoDialog from "@/components/VaccineInfoDialog";
+import UIPBadge from "@/components/UIPBadge";
 import { api } from "@/lib/api";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Progress } from "@/components/ui/progress";
@@ -98,8 +99,15 @@ export default function ChildProfile() {
 
       {/* Timeline */}
       <div className="mt-10">
-        <h2 className="text-xl font-display tracking-tight text-slate-900 dark:text-slate-100">Vaccination timeline</h2>
-        <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">India Universal Immunization Programme schedule</p>
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-2">
+          <div>
+            <h2 className="text-xl font-display tracking-tight text-slate-900 dark:text-slate-100">Vaccination timeline</h2>
+            <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Every dose your child needs, from birth to 16 years.</p>
+          </div>
+          <UIPBadge />
+        </div>
+
+        <UIPBadge variant="card" className="mt-4" />
 
         <div className="mt-6 space-y-10">
           {MILESTONES.filter(m => grouped[m]).map((ms) => (

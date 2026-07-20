@@ -1,6 +1,7 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { getVaccineInfo } from "@/lib/vaccineInfo";
+import UIPBadge from "@/components/UIPBadge";
 import { Shield, HeartPulse, Info, Sparkles, CheckCircle2, Clock, AlertTriangle, CalendarDays, Stethoscope } from "lucide-react";
 
 const STATUS_META = {
@@ -42,6 +43,7 @@ export default function VaccineInfoDialog({ vaccine, open, onOpenChange }) {
               </DialogHeader>
               <div className="mt-2 flex flex-wrap items-center gap-2">
                 <Badge className={`${meta.cls} border-0 rounded-full`}>{meta.label}</Badge>
+                <UIPBadge />
                 <span className="text-xs text-slate-600 dark:text-slate-400">{dateLine}</span>
               </div>
             </div>
@@ -104,8 +106,8 @@ export default function VaccineInfoDialog({ vaccine, open, onOpenChange }) {
             </div>
           )}
 
-          <p className="text-xs text-slate-400 dark:text-slate-500 text-center pt-2">
-            Information based on India&apos;s Universal Immunization Programme guidelines. Always consult your paediatrician for medical advice.
+          <p className="text-xs text-slate-500 dark:text-slate-400 text-center pt-2 leading-relaxed">
+            <span className="font-semibold text-slate-700 dark:text-slate-300">Source:</span> India&apos;s Universal Immunization Programme (UIP) — Ministry of Health &amp; Family Welfare, Government of India. Always consult your paediatrician for medical advice.
           </p>
         </div>
       </DialogContent>

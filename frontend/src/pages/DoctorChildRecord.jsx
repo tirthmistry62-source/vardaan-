@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import AppShell from "@/components/AppShell";
 import VaccineInfoDialog from "@/components/VaccineInfoDialog";
+import UIPBadge from "@/components/UIPBadge";
 import { api } from "@/lib/api";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
@@ -116,6 +117,8 @@ export default function DoctorChildRecord() {
           </div>
         </div>
       </div>
+
+      <div className="mt-6"><UIPBadge variant="card" /></div>
 
       <Tabs defaultValue="due" className="mt-8">
         <TabsList data-testid="doc-tabs" className="rounded-full h-11 bg-slate-100 dark:bg-slate-800 p-1">

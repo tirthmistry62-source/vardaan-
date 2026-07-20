@@ -2,6 +2,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { Syringe, LogOut, Bell, ArrowLeft, Settings } from "lucide-react";
 import { clearSession, getSession } from "@/lib/api";
 import { Button } from "@/components/ui/button";
+import ThemeToggle from "@/components/ThemeToggle";
 
 export default function AppShell({ children, showNotifications = false, unreadCount = 0, showBack = false, backTo = null, settingsPath = null }) {
   const nav = useNavigate();
@@ -14,7 +15,7 @@ export default function AppShell({ children, showNotifications = false, unreadCo
 
   return (
     <div className="min-h-screen aurora-bg">
-      <header className="sticky top-0 z-40 backdrop-blur-xl bg-white/80 border-b border-slate-200">
+      <header className="sticky top-0 z-40 backdrop-blur-xl bg-white/80 dark:bg-slate-900/80 border-b border-slate-200 dark:border-slate-800">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-2">
           <div className="flex items-center gap-2 min-w-0">
             {showBack && (
@@ -37,6 +38,7 @@ export default function AppShell({ children, showNotifications = false, unreadCo
             </Link>
           </div>
           <div className="flex items-center gap-1">
+            <ThemeToggle />
             {settingsPath && (
               <Button
                 variant="ghost"

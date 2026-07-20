@@ -84,13 +84,13 @@ export default function EditChild() {
   };
 
   if (loading) return <AppShell showBack><Skeleton className="h-40 rounded-2xl" /></AppShell>;
-  if (!child) return <AppShell showBack><div className="card-soft p-8 text-center text-slate-600">Child not found.</div></AppShell>;
+  if (!child) return <AppShell showBack><div className="card-soft p-8 text-center text-slate-600 dark:text-slate-400">Child not found.</div></AppShell>;
 
   return (
     <AppShell showBack backTo={`/parent/child/${id}`}>
       <div className="max-w-xl">
-        <h1 className="text-3xl font-display tracking-tight text-slate-900">Edit child</h1>
-        <p className="text-slate-500 mt-2">Update {child.name}&apos;s details.</p>
+        <h1 className="text-3xl font-display tracking-tight text-slate-900 dark:text-slate-100">Edit child</h1>
+        <p className="text-slate-500 dark:text-slate-400 mt-2">Update {child.name}&apos;s details.</p>
 
         <form onSubmit={save} className="card-soft p-6 mt-6 grid gap-5">
           <div>
@@ -118,7 +118,7 @@ export default function EditChild() {
           </div>
           <div>
             <Label>Current weight (kg)</Label>
-            <div className="mt-2 flex items-stretch rounded-xl border border-slate-300 focus-within:ring-2 focus-within:ring-teal-500/20 focus-within:border-teal-600 overflow-hidden bg-white">
+            <div className="mt-2 flex items-stretch rounded-xl border border-slate-300 dark:border-slate-700 focus-within:ring-2 focus-within:ring-teal-500 dark:ring-teal-400/20 focus-within:border-teal-600 overflow-hidden bg-white">
               <Input
                 data-testid="edit-child-weight"
                 type="number"
@@ -130,7 +130,7 @@ export default function EditChild() {
                 placeholder="e.g. 3.2"
                 className="flex-1 h-12 border-0 rounded-none focus-visible:ring-0 focus-visible:ring-offset-0 shadow-none"
               />
-              <span className="px-4 flex items-center bg-slate-50 text-slate-500 font-semibold border-l border-slate-200 select-none">kg</span>
+              <span className="px-4 flex items-center bg-slate-50 text-slate-500 dark:text-slate-400 font-semibold border-l border-slate-200 dark:border-slate-800 select-none">kg</span>
             </div>
           </div>
           <Button data-testid="edit-child-save" type="submit" disabled={saving} className="h-12 rounded-full bg-teal-700 hover:bg-teal-800 text-white">
@@ -138,14 +138,14 @@ export default function EditChild() {
           </Button>
         </form>
 
-        <div className="card-soft p-6 mt-8 border-rose-200">
+        <div className="card-soft p-6 mt-8 border-rose-200 dark:border-rose-900/60">
           <div className="flex items-start gap-3">
-            <div className="w-10 h-10 rounded-xl bg-rose-50 text-rose-600 grid place-items-center shrink-0">
+            <div className="w-10 h-10 rounded-xl bg-rose-50 dark:bg-rose-900/40 text-rose-600 dark:text-rose-300 grid place-items-center shrink-0">
               <ShieldAlert className="w-5 h-5" />
             </div>
             <div className="flex-1">
-              <h2 className="font-display text-lg text-slate-900">Delete child</h2>
-              <p className="text-sm text-slate-500 mt-1">
+              <h2 className="font-display text-lg text-slate-900 dark:text-slate-100">Delete child</h2>
+              <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
                 Permanently deletes {child.name}, their vaccination history, and all related notifications. Cannot be undone.
               </p>
               <Button data-testid="delete-child-btn" onClick={() => setWarnOpen(true)} variant="destructive" className="mt-4 rounded-full gap-2">
@@ -163,7 +163,7 @@ export default function EditChild() {
             <DialogDescription>
               This will permanently erase every vaccination record, notification, and document tied to {child.name}. Neither you nor the other parent will be able to recover this data.
               <br /><br />
-              <span className="font-semibold text-rose-600">This action cannot be undone.</span>
+              <span className="font-semibold text-rose-600 dark:text-rose-300">This action cannot be undone.</span>
             </DialogDescription>
           </DialogHeader>
           <DialogFooter className="gap-2">
@@ -181,7 +181,7 @@ export default function EditChild() {
             <DialogTitle className="font-display text-2xl">Final confirmation</DialogTitle>
             <DialogDescription>
               To confirm, type this exact phrase:
-              <div className="mt-3 p-3 rounded-lg bg-slate-100 text-slate-900 font-mono text-xs leading-relaxed select-all whitespace-pre-wrap break-words">
+              <div className="mt-3 p-3 rounded-lg bg-slate-100 text-slate-900 dark:text-slate-100 font-mono text-xs leading-relaxed select-all whitespace-pre-wrap break-words">
                 {phraseFor(child.name)}
               </div>
             </DialogDescription>
@@ -192,7 +192,7 @@ export default function EditChild() {
             onChange={(e) => setPhrase(e.target.value)}
             placeholder="Type the phrase above exactly"
             rows={4}
-            className="w-full rounded-xl border border-slate-300 p-3 text-sm"
+            className="w-full rounded-xl border border-slate-300 dark:border-slate-700 p-3 text-sm"
           />
           <DialogFooter className="gap-2">
             <Button variant="ghost" data-testid="child-confirm-cancel" onClick={() => setConfirmOpen(false)} className="rounded-full">Cancel</Button>

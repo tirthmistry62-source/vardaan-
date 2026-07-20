@@ -84,22 +84,22 @@ export default function DoctorSettings() {
     <AppShell showBack backTo="/doctor/dashboard">
       <div className="max-w-xl">
         <div className="flex items-center gap-3 mb-6">
-          <div className="w-12 h-12 rounded-2xl bg-sky-50 text-sky-700 grid place-items-center">
+          <div className="w-12 h-12 rounded-2xl bg-sky-50 dark:bg-sky-900/40 text-sky-700 dark:text-sky-300 grid place-items-center">
             <Stethoscope className="w-6 h-6" strokeWidth={1.5} />
           </div>
           <div>
-            <h1 className="text-3xl font-display tracking-tight text-slate-900">Profile & Settings</h1>
-            <p className="text-slate-500 text-sm">Dr. {me.doctor_name}</p>
+            <h1 className="text-3xl font-display tracking-tight text-slate-900 dark:text-slate-100">Profile & Settings</h1>
+            <p className="text-slate-500 dark:text-slate-400 text-sm">Dr. {me.doctor_name}</p>
           </div>
         </div>
 
         <form onSubmit={save} className="card-soft p-6 grid gap-5">
-          <h2 className="font-display text-lg text-slate-900">Account details</h2>
+          <h2 className="font-display text-lg text-slate-900 dark:text-slate-100">Account details</h2>
 
           <div>
             <Label>Doctor name</Label>
-            <div className="mt-2 flex items-stretch rounded-xl border border-slate-300 focus-within:ring-2 focus-within:ring-teal-500/20 focus-within:border-teal-600 overflow-hidden bg-white">
-              <span className="px-4 flex items-center bg-slate-50 text-slate-500 font-semibold border-r border-slate-200 select-none">Dr.</span>
+            <div className="mt-2 flex items-stretch rounded-xl border border-slate-300 dark:border-slate-700 focus-within:ring-2 focus-within:ring-teal-500 dark:ring-teal-400/20 focus-within:border-teal-600 overflow-hidden bg-white">
+              <span className="px-4 flex items-center bg-slate-50 text-slate-500 dark:text-slate-400 font-semibold border-r border-slate-200 dark:border-slate-800 select-none">Dr.</span>
               <Input
                 data-testid="dr-settings-name"
                 value={form.doctor_name}
@@ -108,7 +108,7 @@ export default function DoctorSettings() {
                 className="flex-1 h-12 border-0 rounded-none focus-visible:ring-0 focus-visible:ring-offset-0 shadow-none"
               />
             </div>
-            <p className="text-xs text-slate-500 mt-1.5">Just your name — the &quot;Dr.&quot; title is shown automatically.</p>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1.5">Just your name — the &quot;Dr.&quot; title is shown automatically.</p>
           </div>
 
           <div>
@@ -137,14 +137,14 @@ export default function DoctorSettings() {
           </Button>
         </form>
 
-        <div className="card-soft p-6 mt-8 border-rose-200">
+        <div className="card-soft p-6 mt-8 border-rose-200 dark:border-rose-900/60">
           <div className="flex items-start gap-3">
-            <div className="w-10 h-10 rounded-xl bg-rose-50 text-rose-600 grid place-items-center shrink-0">
+            <div className="w-10 h-10 rounded-xl bg-rose-50 dark:bg-rose-900/40 text-rose-600 dark:text-rose-300 grid place-items-center shrink-0">
               <ShieldAlert className="w-5 h-5" />
             </div>
             <div className="flex-1">
-              <h2 className="font-display text-lg text-slate-900">Danger zone</h2>
-              <p className="text-sm text-slate-500 mt-1">
+              <h2 className="font-display text-lg text-slate-900 dark:text-slate-100">Danger zone</h2>
+              <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
                 Delete your doctor account permanently. Vaccination records you have already recorded will remain in the children&apos;s medical history — this preserves lifelong records for their families.
               </p>
               <Button data-testid="dr-delete-account-btn" onClick={() => setWarnOpen(true)} variant="destructive" className="mt-4 rounded-full gap-2">
@@ -164,7 +164,7 @@ export default function DoctorSettings() {
               <br /><br />
               Any vaccinations you have already recorded remain in each child&apos;s medical history so their family keeps a complete record.
               <br /><br />
-              <span className="font-semibold text-rose-600">This action cannot be undone.</span>
+              <span className="font-semibold text-rose-600 dark:text-rose-300">This action cannot be undone.</span>
             </DialogDescription>
           </DialogHeader>
           <DialogFooter className="gap-2">
@@ -182,7 +182,7 @@ export default function DoctorSettings() {
             <DialogTitle className="font-display text-2xl">Final confirmation</DialogTitle>
             <DialogDescription>
               To confirm, type this phrase exactly:
-              <div className="mt-3 p-3 rounded-lg bg-slate-100 text-slate-900 font-mono text-sm select-all">{DELETE_PHRASE}</div>
+              <div className="mt-3 p-3 rounded-lg bg-slate-100 text-slate-900 dark:text-slate-100 font-mono text-sm select-all">{DELETE_PHRASE}</div>
             </DialogDescription>
           </DialogHeader>
           <Input

@@ -4,22 +4,6 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-    --bg: 210 40% 98%;
-    --surface: 0 0% 100%;
-    --primary: 174 78% 26%;      /* teal 700-ish */
-    --primary-fg: 0 0% 100%;
-    --accent: 199 89% 48%;        /* healthcare blue */
-    --success: 142 71% 45%;
-    --warning: 38 92% 50%;
-    --danger: 0 84% 60%;
-    --text: 222 47% 11%;
-    --text-muted: 215 16% 47%;
-    --border: 214 32% 91%;
-    --ring: 174 78% 26%;
-    --radius: 1rem;
-}
-
 @layer base {
     :root {
         --background: 210 40% 98%;
@@ -42,12 +26,34 @@
         --input: 214 32% 91%;
         --ring: 174 78% 26%;
         --radius: 1rem;
+        --surface: 0 0% 100%;
+    }
+
+    .dark {
+        --background: 222 47% 8%;         /* very dark navy */
+        --foreground: 210 40% 96%;
+        --card: 217 33% 14%;              /* slate-800-ish */
+        --card-foreground: 210 40% 96%;
+        --popover: 217 33% 14%;
+        --popover-foreground: 210 40% 96%;
+        --primary: 174 72% 42%;           /* brighter teal for dark */
+        --primary-foreground: 0 0% 100%;
+        --secondary: 217 33% 18%;
+        --secondary-foreground: 210 40% 96%;
+        --muted: 217 33% 18%;
+        --muted-foreground: 215 20% 65%;
+        --accent: 217 33% 20%;
+        --accent-foreground: 174 72% 55%;
+        --destructive: 0 62% 50%;
+        --destructive-foreground: 0 0% 100%;
+        --border: 217 33% 22%;
+        --input: 217 33% 22%;
+        --ring: 174 72% 42%;
+        --surface: 217 33% 14%;
     }
 }
 
-* {
-    border-color: hsl(var(--border));
-}
+* { border-color: hsl(var(--border)); }
 
 html, body {
     margin: 0;
@@ -66,11 +72,17 @@ h1, h2, h3, h4, h5, h6, .font-display {
     font-weight: 700;
 }
 
-/* Ambient background decoration for auth pages */
+/* Ambient background decoration */
 .aurora-bg {
     background:
       radial-gradient(1200px 500px at 10% -10%, hsla(174, 78%, 88%, 0.55), transparent 60%),
       radial-gradient(900px 500px at 100% 10%, hsla(199, 89%, 92%, 0.55), transparent 60%),
+      hsl(var(--background));
+}
+.dark .aurora-bg {
+    background:
+      radial-gradient(1200px 500px at 10% -10%, hsla(174, 72%, 30%, 0.22), transparent 60%),
+      radial-gradient(900px 500px at 100% 10%, hsla(199, 89%, 40%, 0.22), transparent 60%),
       hsl(var(--background));
 }
 
@@ -80,12 +92,19 @@ h1, h2, h3, h4, h5, h6, .font-display {
 .status-overdue   { background:#FEE2E2; color:#B91C1C; }
 .status-upcoming  { background:#E0F2FE; color:#0369A1; }
 
+.dark .status-completed { background: rgba(21, 128, 61, 0.18); color: #86EFAC; }
+.dark .status-due       { background: rgba(180, 83, 9, 0.20);  color: #FCD34D; }
+.dark .status-overdue   { background: rgba(185, 28, 28, 0.20); color: #FCA5A5; }
+.dark .status-upcoming  { background: rgba(3, 105, 161, 0.20); color: #7DD3FC; }
+
 .card-soft {
-    background: hsl(var(--surface));
+    background: hsl(var(--card));
     border: 1px solid hsl(var(--border));
     border-radius: 1.25rem;
     box-shadow: 0 8px 30px rgba(15, 23, 42, 0.04);
+    color: hsl(var(--card-foreground));
 }
+.dark .card-soft { box-shadow: 0 8px 30px rgba(0, 0, 0, 0.35); }
 
 .hover-lift {
     transition: transform 220ms cubic-bezier(.2,.8,.2,1), box-shadow 220ms cubic-bezier(.2,.8,.2,1);
@@ -94,31 +113,30 @@ h1, h2, h3, h4, h5, h6, .font-display {
     transform: translateY(-3px);
     box-shadow: 0 14px 40px rgba(15, 23, 42, 0.08);
 }
+.dark .hover-lift:hover { box-shadow: 0 14px 40px rgba(0, 0, 0, 0.55); }
 
 .tap-scale:active { transform: scale(0.97); }
 
-/* Timeline vertical rail */
 .timeline-rail {
     position: absolute;
     left: 22px;
     top: 8px;
     bottom: 8px;
     width: 2px;
-    background: linear-gradient(180deg, #E2E8F0 0%, #E2E8F0 100%);
+    background: linear-gradient(180deg, hsl(var(--border)) 0%, hsl(var(--border)) 100%);
     border-radius: 999px;
 }
 
 .node-dot {
     width: 44px; height: 44px; border-radius: 999px;
     display: flex; align-items: center; justify-content: center;
-    background: white; border: 2px solid #E2E8F0; color: #64748B;
+    background: hsl(var(--card)); border: 2px solid hsl(var(--border)); color: hsl(var(--muted-foreground));
     flex-shrink: 0;
 }
 .node-dot.done { background: #16A34A; border-color: #16A34A; color: white; }
 .node-dot.due  { background: #F59E0B; border-color: #F59E0B; color: white; }
 .node-dot.over { background: #DC2626; border-color: #DC2626; color: white; }
 
-/* Reduced motion */
 @media (prefers-reduced-motion: reduce) {
     * { animation: none !important; transition: none !important; }
 }
@@ -133,4 +151,11 @@ h1, h2, h3, h4, h5, h6, .font-display {
 
 @layer base {
     [data-debug-wrapper="true"] { display: contents !important; }
+}
+
+/* Smooth theme transition across all common surfaces */
+html.theme-transition,
+html.theme-transition body,
+html.theme-transition * {
+    transition: background-color 220ms ease, color 220ms ease, border-color 220ms ease;
 }

@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { api, setSession } from "@/lib/api";
 import { Loader2, ArrowLeft } from "lucide-react";
+import ThemeToggle from "@/components/ThemeToggle";
 
 export default function ParentRegister() {
   const nav = useNavigate();
@@ -42,12 +43,13 @@ export default function ParentRegister() {
 
   return (
     <div className="min-h-screen aurora-bg flex items-center justify-center p-6">
+      <ThemeToggle floating />
       <form onSubmit={submit} className="w-full max-w-md card-soft p-8">
-        <Link to="/parent/login" data-testid="back-to-login" className="inline-flex items-center gap-2 text-sm text-slate-500 hover:text-slate-700 mb-6">
+        <Link to="/parent/login" data-testid="back-to-login" className="inline-flex items-center gap-2 text-sm text-slate-500 hover:text-slate-700 dark:hover:text-slate-200 dark:text-slate-300 mb-6">
           <ArrowLeft className="w-4 h-4" /> Back to login
         </Link>
-        <h1 className="text-3xl font-display tracking-tight text-slate-900">Create Parent Account</h1>
-        <p className="mt-2 text-slate-500 text-sm">Your Aadhaar acts as your username. Only you and your co-parent will see your children's records.</p>
+        <h1 className="text-3xl font-display tracking-tight text-slate-900 dark:text-slate-100">Create Parent Account</h1>
+        <p className="mt-2 text-slate-500 dark:text-slate-400 text-sm">Your Aadhaar acts as your username. Only you and your co-parent will see your children's records.</p>
 
         <div className="mt-8 grid gap-5">
           <div>
@@ -82,8 +84,8 @@ export default function ParentRegister() {
           {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Create account"}
         </Button>
 
-        <p className="mt-6 text-center text-sm text-slate-500">
-          Already have an account? <Link to="/parent/login" className="text-teal-700 font-medium hover:underline">Sign in</Link>
+        <p className="mt-6 text-center text-sm text-slate-500 dark:text-slate-400">
+          Already have an account? <Link to="/parent/login" className="text-teal-700 dark:text-teal-300 font-medium hover:underline">Sign in</Link>
         </p>
       </form>
     </div>

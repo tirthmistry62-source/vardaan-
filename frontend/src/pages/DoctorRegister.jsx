@@ -7,6 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { api, setSession } from "@/lib/api";
 import { Loader2, ArrowLeft } from "lucide-react";
+import ThemeToggle from "@/components/ThemeToggle";
 
 export default function DoctorRegister() {
   const nav = useNavigate();
@@ -36,16 +37,17 @@ export default function DoctorRegister() {
 
   return (
     <div className="min-h-screen aurora-bg flex items-center justify-center p-6">
+      <ThemeToggle floating />
       <form onSubmit={submit} className="w-full max-w-md card-soft p-8">
-        <Link to="/doctor/login" data-testid="back-to-login" className="inline-flex items-center gap-2 text-sm text-slate-500 hover:text-slate-700 mb-6">
+        <Link to="/doctor/login" data-testid="back-to-login" className="inline-flex items-center gap-2 text-sm text-slate-500 hover:text-slate-700 dark:hover:text-slate-200 dark:text-slate-300 mb-6">
           <ArrowLeft className="w-4 h-4" /> Back to login
         </Link>
-        <h1 className="text-3xl font-display tracking-tight text-slate-900">Create Doctor Account</h1>
-        <p className="mt-2 text-slate-500 text-sm">Self-registration. No approval needed.</p>
+        <h1 className="text-3xl font-display tracking-tight text-slate-900 dark:text-slate-100">Create Doctor Account</h1>
+        <p className="mt-2 text-slate-500 dark:text-slate-400 text-sm">Self-registration. No approval needed.</p>
         <div className="mt-8 grid gap-5">
           <div><Label>Doctor name</Label>
-            <div className="mt-2 flex items-stretch rounded-xl border border-slate-300 focus-within:ring-2 focus-within:ring-teal-500/20 focus-within:border-teal-600 overflow-hidden bg-white">
-              <span className="px-4 flex items-center bg-slate-50 text-slate-500 font-semibold border-r border-slate-200 select-none">Dr.</span>
+            <div className="mt-2 flex items-stretch rounded-xl border border-slate-300 dark:border-slate-700 focus-within:ring-2 focus-within:ring-teal-500 dark:ring-teal-400/20 focus-within:border-teal-600 overflow-hidden bg-white">
+              <span className="px-4 flex items-center bg-slate-50 text-slate-500 dark:text-slate-400 font-semibold border-r border-slate-200 dark:border-slate-800 select-none">Dr.</span>
               <Input
                 data-testid="dr-name"
                 value={form.doctor_name}
@@ -54,7 +56,7 @@ export default function DoctorRegister() {
                 className="flex-1 h-12 border-0 rounded-none focus-visible:ring-0 focus-visible:ring-offset-0 shadow-none"
               />
             </div>
-            <p className="text-xs text-slate-500 mt-1.5">Just your name — the "Dr." title is added automatically.</p>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1.5">Just your name — the "Dr." title is added automatically.</p>
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div><Label>Phone</Label>
@@ -71,8 +73,8 @@ export default function DoctorRegister() {
         <Button data-testid="dr-submit" type="submit" disabled={loading} className="mt-8 w-full h-12 rounded-full bg-sky-700 hover:bg-sky-800 text-white">
           {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Create account"}
         </Button>
-        <p className="mt-6 text-center text-sm text-slate-500">
-          Already registered? <Link to="/doctor/login" className="text-sky-700 font-medium hover:underline">Sign in</Link>
+        <p className="mt-6 text-center text-sm text-slate-500 dark:text-slate-400">
+          Already registered? <Link to="/doctor/login" className="text-sky-700 dark:text-sky-300 font-medium hover:underline">Sign in</Link>
         </p>
       </form>
     </div>

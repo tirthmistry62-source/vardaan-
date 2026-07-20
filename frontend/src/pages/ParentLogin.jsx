@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { api, setSession } from "@/lib/api";
 import { HeartPulse, Loader2, ArrowLeft } from "lucide-react";
+import ThemeToggle from "@/components/ThemeToggle";
 
 export default function ParentLogin() {
   const nav = useNavigate();
@@ -31,6 +32,7 @@ export default function ParentLogin() {
 
   return (
     <div className="min-h-screen aurora-bg grid md:grid-cols-2">
+      <ThemeToggle floating />
       <div className="hidden md:flex flex-col justify-between p-10 bg-teal-700 text-white relative overflow-hidden">
         <div>
           <div className="w-11 h-11 rounded-2xl bg-white/15 grid place-items-center">
@@ -45,15 +47,15 @@ export default function ParentLogin() {
 
       <div className="flex items-center justify-center p-6">
         <form onSubmit={submit} className="w-full max-w-md card-soft p-8">
-          <Link to="/select-role" data-testid="back-to-roles" className="inline-flex items-center gap-2 text-sm text-slate-500 hover:text-slate-700 mb-6">
+          <Link to="/select-role" data-testid="back-to-roles" className="inline-flex items-center gap-2 text-sm text-slate-500 hover:text-slate-700 dark:hover:text-slate-200 dark:text-slate-300 mb-6">
             <ArrowLeft className="w-4 h-4" /> Back to role selection
           </Link>
-          <h1 className="text-3xl font-display tracking-tight text-slate-900">Parent Login</h1>
-          <p className="mt-2 text-slate-500 text-sm">Sign in with your Aadhaar to access your children's records.</p>
+          <h1 className="text-3xl font-display tracking-tight text-slate-900 dark:text-slate-100">Parent Login</h1>
+          <p className="mt-2 text-slate-500 dark:text-slate-400 text-sm">Sign in with your Aadhaar to access your children's records.</p>
 
           <div className="mt-8 space-y-5">
             <div>
-              <Label className="text-slate-700">Aadhaar number</Label>
+              <Label className="text-slate-700 dark:text-slate-300">Aadhaar number</Label>
               <Input
                 data-testid="parent-login-aadhaar"
                 value={aadhaar}
@@ -64,7 +66,7 @@ export default function ParentLogin() {
               />
             </div>
             <div>
-              <Label className="text-slate-700">Password</Label>
+              <Label className="text-slate-700 dark:text-slate-300">Password</Label>
               <Input
                 data-testid="parent-login-password"
                 type="password"
@@ -86,8 +88,8 @@ export default function ParentLogin() {
           </Button>
 
           <div className="mt-6 flex items-center justify-between text-sm">
-            <Link data-testid="parent-register-link" to="/parent/register" className="text-teal-700 font-medium hover:underline">Create parent account</Link>
-            <Link to="/select-role" className="text-slate-500 hover:text-slate-700">Switch role</Link>
+            <Link data-testid="parent-register-link" to="/parent/register" className="text-teal-700 dark:text-teal-300 font-medium hover:underline">Create parent account</Link>
+            <Link to="/select-role" className="text-slate-500 hover:text-slate-700 dark:hover:text-slate-200 dark:text-slate-300">Switch role</Link>
           </div>
         </form>
       </div>

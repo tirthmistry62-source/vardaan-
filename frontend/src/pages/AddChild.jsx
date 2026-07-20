@@ -59,12 +59,12 @@ export default function AddChild() {
 
   return (
     <AppShell showBack backTo="/parent/dashboard">
-      <button data-testid="back-btn" onClick={() => nav(-1)} className="inline-flex items-center gap-2 text-slate-500 hover:text-slate-700 text-sm mb-6">
+      <button data-testid="back-btn" onClick={() => nav(-1)} className="inline-flex items-center gap-2 text-slate-500 hover:text-slate-700 dark:hover:text-slate-200 dark:text-slate-300 text-sm mb-6">
         <ArrowLeft className="w-4 h-4" /> Back
       </button>
       <div className="max-w-xl">
-        <h1 className="text-3xl font-display tracking-tight text-slate-900">Add Child</h1>
-        <p className="text-slate-500 mt-2">This child will be linked to both parents automatically using Aadhaar.</p>
+        <h1 className="text-3xl font-display tracking-tight text-slate-900 dark:text-slate-100">Add Child</h1>
+        <p className="text-slate-500 dark:text-slate-400 mt-2">This child will be linked to both parents automatically using Aadhaar.</p>
 
         <form onSubmit={submit} className="card-soft p-8 mt-8 grid gap-5">
           <div>
@@ -92,7 +92,7 @@ export default function AddChild() {
           </div>
           <div>
             <Label>Current weight (kg)</Label>
-            <div className="mt-2 flex items-stretch rounded-xl border border-slate-300 focus-within:ring-2 focus-within:ring-teal-500/20 focus-within:border-teal-600 overflow-hidden bg-white">
+            <div className="mt-2 flex items-stretch rounded-xl border border-slate-300 dark:border-slate-700 focus-within:ring-2 focus-within:ring-teal-500 dark:ring-teal-400/20 focus-within:border-teal-600 overflow-hidden bg-white">
               <Input
                 data-testid="ch-weight"
                 type="number"
@@ -104,7 +104,7 @@ export default function AddChild() {
                 placeholder="e.g. 3.2"
                 className="flex-1 h-12 border-0 rounded-none focus-visible:ring-0 focus-visible:ring-offset-0 shadow-none"
               />
-              <span className="px-4 flex items-center bg-slate-50 text-slate-500 font-semibold border-l border-slate-200 select-none">kg</span>
+              <span className="px-4 flex items-center bg-slate-50 text-slate-500 dark:text-slate-400 font-semibold border-l border-slate-200 dark:border-slate-800 select-none">kg</span>
             </div>
           </div>
           <div>

@@ -78,11 +78,11 @@ export default function DoctorChildRecord() {
   };
 
   if (loading) return <AppShell><Skeleton className="h-40 rounded-2xl" /></AppShell>;
-  if (!child) return <AppShell><div className="card-soft p-8 text-center text-slate-600">Child not found.</div></AppShell>;
+  if (!child) return <AppShell><div className="card-soft p-8 text-center text-slate-600 dark:text-slate-400">Child not found.</div></AppShell>;
 
   return (
     <AppShell showBack backTo="/doctor/dashboard">
-      <button data-testid="back-btn" onClick={() => nav(-1)} className="inline-flex items-center gap-2 text-slate-500 hover:text-slate-700 text-sm mb-6">
+      <button data-testid="back-btn" onClick={() => nav(-1)} className="inline-flex items-center gap-2 text-slate-500 hover:text-slate-700 dark:hover:text-slate-200 dark:text-slate-300 text-sm mb-6">
         <ArrowLeft className="w-4 h-4" /> Back to search
       </button>
 
@@ -92,25 +92,25 @@ export default function DoctorChildRecord() {
             <User2 className="w-8 h-8" strokeWidth={1.5} />
           </div>
           <div className="flex-1">
-            <h1 className="text-2xl font-display tracking-tight text-slate-900">{child.name}</h1>
-            <p className="text-slate-500 text-sm mt-1">{child.gender} • {ageString(child.dob)} • DOB {new Date(child.dob).toLocaleDateString("en-IN")}{child.weight_kg != null ? ` • ${child.weight_kg} kg` : ""}</p>
+            <h1 className="text-2xl font-display tracking-tight text-slate-900 dark:text-slate-100">{child.name}</h1>
+            <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">{child.gender} • {ageString(child.dob)} • DOB {new Date(child.dob).toLocaleDateString("en-IN")}{child.weight_kg != null ? ` • ${child.weight_kg} kg` : ""}</p>
           </div>
           <div className="sm:text-right">
-            <div className="text-3xl font-display text-teal-700">{pct}%</div>
-            <div className="text-xs text-slate-500">complete</div>
+            <div className="text-3xl font-display text-teal-700 dark:text-teal-300">{pct}%</div>
+            <div className="text-xs text-slate-500 dark:text-slate-400">complete</div>
           </div>
         </div>
         <Progress value={pct} className="h-2 mt-6" />
         <div className="mt-4 grid grid-cols-3 gap-2 text-sm">
-          <div className="rounded-lg bg-teal-50 text-teal-700 px-3 py-2 text-center">
+          <div className="rounded-lg bg-teal-50 dark:bg-teal-900/40 text-teal-700 dark:text-teal-300 px-3 py-2 text-center">
             <div className="font-display text-lg leading-none">{completedItems.length}</div>
             <div className="text-xs mt-1">Completed</div>
           </div>
-          <div className="rounded-lg bg-amber-50 text-amber-700 px-3 py-2 text-center">
+          <div className="rounded-lg bg-amber-50 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300 px-3 py-2 text-center">
             <div className="font-display text-lg leading-none">{dueItems.length}</div>
             <div className="text-xs mt-1">Due / Overdue</div>
           </div>
-          <div className="rounded-lg bg-sky-50 text-sky-700 px-3 py-2 text-center">
+          <div className="rounded-lg bg-sky-50 dark:bg-sky-900/40 text-sky-700 dark:text-sky-300 px-3 py-2 text-center">
             <div className="font-display text-lg leading-none">{upcomingItems.length}</div>
             <div className="text-xs mt-1">Upcoming</div>
           </div>
@@ -118,26 +118,26 @@ export default function DoctorChildRecord() {
       </div>
 
       <Tabs defaultValue="due" className="mt-8">
-        <TabsList data-testid="doc-tabs" className="rounded-full h-11 bg-slate-100 p-1">
+        <TabsList data-testid="doc-tabs" className="rounded-full h-11 bg-slate-100 dark:bg-slate-800 p-1">
           <TabsTrigger value="due" data-testid="tab-due" className="rounded-full px-4 h-9 data-[state=active]:bg-white data-[state=active]:shadow-sm">Due & Overdue ({dueItems.length})</TabsTrigger>
           <TabsTrigger value="history" data-testid="tab-history" className="rounded-full px-4 h-9 data-[state=active]:bg-white data-[state=active]:shadow-sm">History ({completedItems.length})</TabsTrigger>
           <TabsTrigger value="all" data-testid="tab-all" className="rounded-full px-4 h-9 data-[state=active]:bg-white data-[state=active]:shadow-sm">All ({items.length})</TabsTrigger>
         </TabsList>
 
         <TabsContent value="due" className="mt-6">
-          <p className="text-sm text-slate-500 mb-4">Select the vaccines you&apos;re administering today. Parents will be notified instantly. Tap the info icon on any card to see vaccine details.</p>
+          <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">Select the vaccines you&apos;re administering today. Parents will be notified instantly. Tap the info icon on any card to see vaccine details.</p>
           <VaccineList items={dueItems} selected={selected} onToggle={toggle} onInfo={setInfoVaccine} emptyText="No due or overdue vaccines. Great work!" selectable />
         </TabsContent>
 
         <TabsContent value="history" className="mt-6">
-          <div className="flex items-center gap-2 text-sm text-slate-500 mb-4">
+          <div className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400 mb-4">
             <History className="w-4 h-4" /> Past vaccinations already recorded for {child.name}.
           </div>
           <VaccineList items={completedItems} selected={selected} onToggle={toggle} onInfo={setInfoVaccine} emptyText="No vaccinations recorded yet." />
         </TabsContent>
 
         <TabsContent value="all" className="mt-6">
-          <p className="text-sm text-slate-500 mb-4">Complete UIP schedule — completed, due, overdue, and upcoming.</p>
+          <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">Complete UIP schedule — completed, due, overdue, and upcoming.</p>
           <VaccineList items={items} selected={selected} onToggle={toggle} onInfo={setInfoVaccine} emptyText="No schedule." selectable />
         </TabsContent>
       </Tabs>
@@ -147,14 +147,14 @@ export default function DoctorChildRecord() {
           <div className="card-soft p-4 shadow-[0_20px_60px_rgba(15,23,42,0.15)]">
             <div className="flex flex-col sm:flex-row sm:items-center gap-4">
               <div className="text-sm flex-1">
-                <div className="font-semibold text-slate-900">{selected.size} vaccine{selected.size > 1 ? "s" : ""} selected</div>
-                <div className="text-xs text-slate-500">Parents will be notified instantly.</div>
+                <div className="font-semibold text-slate-900 dark:text-slate-100">{selected.size} vaccine{selected.size > 1 ? "s" : ""} selected</div>
+                <div className="text-xs text-slate-500 dark:text-slate-400">Parents will be notified instantly.</div>
               </div>
               <div className="flex-1 sm:max-w-[200px]">
-                <label className="text-xs font-medium text-slate-600 flex items-center gap-1">
-                  Weight now <span className="text-rose-500">*</span>
+                <label className="text-xs font-medium text-slate-600 dark:text-slate-400 flex items-center gap-1">
+                  Weight now <span className="text-rose-500 dark:text-rose-400">*</span>
                 </label>
-                <div className="mt-1 flex items-stretch rounded-xl border border-slate-300 focus-within:ring-2 focus-within:ring-teal-500/20 focus-within:border-teal-600 overflow-hidden bg-white">
+                <div className="mt-1 flex items-stretch rounded-xl border border-slate-300 dark:border-slate-700 focus-within:ring-2 focus-within:ring-teal-500 dark:ring-teal-400/20 focus-within:border-teal-600 overflow-hidden bg-white">
                   <Input
                     data-testid="doc-weight-input"
                     type="number"
@@ -166,7 +166,7 @@ export default function DoctorChildRecord() {
                     placeholder="e.g. 4.5"
                     className="flex-1 h-11 border-0 rounded-none focus-visible:ring-0 focus-visible:ring-offset-0 shadow-none"
                   />
-                  <span className="px-3 flex items-center bg-slate-50 text-slate-500 font-semibold border-l border-slate-200 select-none text-sm">kg</span>
+                  <span className="px-3 flex items-center bg-slate-50 text-slate-500 dark:text-slate-400 font-semibold border-l border-slate-200 dark:border-slate-800 select-none text-sm">kg</span>
                 </div>
               </div>
               <Button data-testid="doc-record-submit" onClick={save} disabled={saving || !weightKg} className="h-12 rounded-full bg-teal-700 hover:bg-teal-800 text-white px-6 gap-2 self-stretch sm:self-auto">
@@ -180,7 +180,7 @@ export default function DoctorChildRecord() {
 
       <Dialog open={!!success} onOpenChange={(o) => { if (!o) setSuccess(null); }}>
         <DialogContent className="rounded-3xl max-w-sm p-8 text-center">
-          <div className="mx-auto w-20 h-20 rounded-full bg-teal-50 grid place-items-center">
+          <div className="mx-auto w-20 h-20 rounded-full bg-teal-50 dark:bg-teal-900/40 grid place-items-center">
             <svg className="check-svg" width="56" height="56" viewBox="0 0 60 60" fill="none">
               <circle cx="30" cy="30" r="26" stroke="#0F766E" strokeWidth="3" fill="none" />
               <path d="M18 31l9 9 16-19" stroke="#0F766E" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" fill="none" />
@@ -189,10 +189,10 @@ export default function DoctorChildRecord() {
           <DialogHeader>
             <DialogTitle className="text-2xl font-display text-center mt-4">Recorded</DialogTitle>
           </DialogHeader>
-          <p className="text-sm text-slate-500">
+          <p className="text-sm text-slate-500 dark:text-slate-400">
             {success?.count} vaccine{success?.count > 1 ? "s" : ""} saved to {child.name}&apos;s record.
           </p>
-          <ul className="mt-3 text-sm text-slate-700 space-y-1">
+          <ul className="mt-3 text-sm text-slate-700 dark:text-slate-300 space-y-1">
             {success?.names?.map((n, i) => <li key={i}>• {n}</li>)}
           </ul>
           <DialogFooter className="mt-6">
@@ -213,7 +213,7 @@ export default function DoctorChildRecord() {
 
 function VaccineList({ items, selected, onToggle, onInfo, emptyText, selectable = false }) {
   if (items.length === 0) {
-    return <div className="card-soft p-6 text-center text-slate-500">{emptyText}</div>;
+    return <div className="card-soft p-6 text-center text-slate-500 dark:text-slate-400">{emptyText}</div>;
   }
   return (
     <div className="grid md:grid-cols-2 gap-3">
@@ -230,7 +230,7 @@ function VaccineList({ items, selected, onToggle, onInfo, emptyText, selectable 
           <div
             key={v.code}
             data-testid={`doc-vaccine-${v.code}`}
-            className={`card-soft p-4 flex items-start gap-3 ${checked ? "ring-2 ring-teal-500 border-teal-500" : ""}`}
+            className={`card-soft p-4 flex items-start gap-3 ${checked ? "ring-2 ring-teal-500 border-teal-500 dark:border-teal-400" : ""}`}
           >
             {showCheckbox && (
               <Checkbox
@@ -251,16 +251,16 @@ function VaccineList({ items, selected, onToggle, onInfo, emptyText, selectable 
               aria-label={`View info about ${v.name}`}
             >
               <div className="flex items-center justify-between gap-2">
-                <div className="font-semibold text-slate-900 truncate flex items-center gap-1.5">
+                <div className="font-semibold text-slate-900 dark:text-slate-100 truncate flex items-center gap-1.5">
                   {v.name}
-                  <Info className="w-3.5 h-3.5 text-slate-300 group-hover:text-teal-600 transition-colors" />
+                  <Info className="w-3.5 h-3.5 text-slate-300 dark:text-slate-600 group-hover:text-teal-600 transition-colors" />
                 </div>
                 <span className={`text-[10px] font-semibold uppercase tracking-wide rounded-full px-2 py-0.5 ${meta.cls}`}>{meta.label}</span>
               </div>
-              <div className="text-xs text-slate-500 mt-0.5">{v.dose} • {v.milestone} • {dateLabel}</div>
+              <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{v.dose} • {v.milestone} • {dateLabel}</div>
               {isCompleted && v.record && (
-                <div className="mt-2 text-xs text-slate-600">
-                  Dr. {v.record.doctor_name} <span className="text-slate-400">• {v.record.clinic_name}</span>
+                <div className="mt-2 text-xs text-slate-600 dark:text-slate-400">
+                  Dr. {v.record.doctor_name} <span className="text-slate-400 dark:text-slate-500">• {v.record.clinic_name}</span>
                 </div>
               )}
             </button>

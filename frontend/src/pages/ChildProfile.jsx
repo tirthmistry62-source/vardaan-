@@ -54,7 +54,7 @@ export default function ChildProfile() {
     return <AppShell showBack backTo="/parent/dashboard"><Skeleton className="h-40 rounded-2xl" /><div className="mt-6 space-y-4">{[0,1,2].map(i=><Skeleton key={i} className="h-24 rounded-2xl" />)}</div></AppShell>;
   }
   if (!child) {
-    return <AppShell showBack backTo="/parent/dashboard"><div className="card-soft p-8 text-center text-slate-600">Child not found.</div></AppShell>;
+    return <AppShell showBack backTo="/parent/dashboard"><div className="card-soft p-8 text-center text-slate-600 dark:text-slate-400">Child not found.</div></AppShell>;
   }
 
   return (
@@ -63,7 +63,7 @@ export default function ChildProfile() {
         <Link
           to={`/parent/child/${child.id}/edit`}
           data-testid="edit-child-link"
-          className="inline-flex items-center gap-2 text-sm font-medium text-teal-700 hover:underline"
+          className="inline-flex items-center gap-2 text-sm font-medium text-teal-700 dark:text-teal-300 hover:underline"
         >
           <Pencil className="w-4 h-4" /> Edit child
         </Link>
@@ -77,12 +77,12 @@ export default function ChildProfile() {
             <User2 className="w-10 h-10" strokeWidth={1.5} />
           </div>
           <div className="flex-1">
-            <h1 className="text-3xl font-display tracking-tight text-slate-900">{child.name}</h1>
-            <p className="text-slate-500 mt-1">{child.gender} • {ageString(child.dob)} • Born {new Date(child.dob).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}{child.weight_kg != null ? ` • ${child.weight_kg} kg` : ""}</p>
+            <h1 className="text-3xl font-display tracking-tight text-slate-900 dark:text-slate-100">{child.name}</h1>
+            <p className="text-slate-500 dark:text-slate-400 mt-1">{child.gender} • {ageString(child.dob)} • Born {new Date(child.dob).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}{child.weight_kg != null ? ` • ${child.weight_kg} kg` : ""}</p>
           </div>
           <div className="sm:text-right">
-            <div className="text-4xl font-display text-teal-700">{pct}%</div>
-            <div className="text-xs text-slate-500 -mt-1">complete</div>
+            <div className="text-4xl font-display text-teal-700 dark:text-teal-300">{pct}%</div>
+            <div className="text-xs text-slate-500 dark:text-slate-400 -mt-1">complete</div>
           </div>
         </div>
         <div className="mt-6">
@@ -98,15 +98,15 @@ export default function ChildProfile() {
 
       {/* Timeline */}
       <div className="mt-10">
-        <h2 className="text-xl font-display tracking-tight text-slate-900">Vaccination timeline</h2>
-        <p className="text-sm text-slate-500 mt-1">India Universal Immunization Programme schedule</p>
+        <h2 className="text-xl font-display tracking-tight text-slate-900 dark:text-slate-100">Vaccination timeline</h2>
+        <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">India Universal Immunization Programme schedule</p>
 
         <div className="mt-6 space-y-10">
           {MILESTONES.filter(m => grouped[m]).map((ms) => (
             <div key={ms} className="relative pl-14">
               <div className="timeline-rail" />
-              <h3 className="text-lg font-display text-slate-800 relative">
-                <span className="absolute -left-14 top-0 node-dot bg-white border-teal-600 text-teal-700 font-bold text-sm">
+              <h3 className="text-lg font-display text-slate-800 dark:text-slate-200 relative">
+                <span className="absolute -left-14 top-0 node-dot bg-white border-teal-600 text-teal-700 dark:text-teal-300 font-bold text-sm">
                   {ms.split(" ")[0]}
                 </span>
                 {ms}
@@ -130,10 +130,10 @@ export default function ChildProfile() {
 
 function StatChip({ icon: Icon, label, value, tint }) {
   const map = {
-    teal: "bg-teal-50 text-teal-700",
-    amber: "bg-amber-50 text-amber-700",
-    rose: "bg-rose-50 text-rose-700",
-    sky: "bg-sky-50 text-sky-700",
+    teal: "bg-teal-50 dark:bg-teal-900/40 text-teal-700 dark:text-teal-300",
+    amber: "bg-amber-50 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300",
+    rose: "bg-rose-50 dark:bg-rose-900/40 text-rose-700",
+    sky: "bg-sky-50 dark:bg-sky-900/40 text-sky-700 dark:text-sky-300",
   };
   return (
     <div className={`rounded-xl px-4 py-3 ${map[tint]} flex items-center gap-3`}>
@@ -164,17 +164,17 @@ function VaccineCard({ v, onOpen }) {
       </div>
       <div className="flex-1 min-w-0">
         <div className="flex items-center justify-between gap-2">
-          <div className="font-semibold text-slate-900 truncate flex items-center gap-1.5">
+          <div className="font-semibold text-slate-900 dark:text-slate-100 truncate flex items-center gap-1.5">
             {v.name}
-            <Info className="w-3.5 h-3.5 text-slate-300 group-hover:text-teal-600 transition-colors" />
+            <Info className="w-3.5 h-3.5 text-slate-300 dark:text-slate-600 group-hover:text-teal-600 transition-colors" />
           </div>
           <span className={`text-[10px] font-semibold uppercase tracking-wide rounded-full px-2 py-0.5 ${meta.cls}`}>{meta.label}</span>
         </div>
-        <div className="text-xs text-slate-500 mt-0.5">{v.dose} • {dateLabel}</div>
+        <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{v.dose} • {dateLabel}</div>
         {v.record && (
-          <div className="mt-2 flex items-center gap-1.5 text-xs text-slate-600">
+          <div className="mt-2 flex items-center gap-1.5 text-xs text-slate-600 dark:text-slate-400">
             <Stethoscope className="w-3.5 h-3.5" />
-            Dr. {v.record.doctor_name} <span className="text-slate-400">• {v.record.clinic_name}</span>
+            Dr. {v.record.doctor_name} <span className="text-slate-400 dark:text-slate-500">• {v.record.clinic_name}</span>
           </div>
         )}
       </div>

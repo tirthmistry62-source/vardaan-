@@ -33,16 +33,16 @@ export default function DoctorDashboard() {
   return (
     <AppShell settingsPath="/doctor/settings">
       <div className="mb-6">
-        <p className="text-slate-500 text-sm">Signed in as</p>
-        <h1 className="text-3xl font-display tracking-tight text-slate-900 mt-1">Dr. {session?.user?.doctor_name}</h1>
-        <p className="text-slate-500 mt-1">{session?.user?.clinic_name}</p>
+        <p className="text-slate-500 dark:text-slate-400 text-sm">Signed in as</p>
+        <h1 className="text-3xl font-display tracking-tight text-slate-900 dark:text-slate-100 mt-1">Dr. {session?.user?.doctor_name}</h1>
+        <p className="text-slate-500 dark:text-slate-400 mt-1">{session?.user?.clinic_name}</p>
       </div>
 
       <form onSubmit={search} className="card-soft p-6 sm:p-8">
-        <label className="text-sm font-medium text-slate-700">Search a child or parent by Aadhaar</label>
+        <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Search a child or parent by Aadhaar</label>
         <div className="mt-3 flex flex-col sm:flex-row gap-3">
           <div className="relative flex-1">
-            <Search className="w-5 h-5 absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
+            <Search className="w-5 h-5 absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500" />
             <Input
               data-testid="doc-search-input"
               inputMode="numeric"
@@ -56,7 +56,7 @@ export default function DoctorDashboard() {
             {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <><Search className="w-4 h-4" /> Search</>}
           </Button>
         </div>
-        <p className="mt-3 text-xs text-slate-500">
+        <p className="mt-3 text-xs text-slate-500 dark:text-slate-400">
           Auto-detects parent or child. In this build, access is granted immediately after search.
         </p>
       </form>
@@ -66,17 +66,17 @@ export default function DoctorDashboard() {
           {result.match_type === "parent" ? (
             <>
               <div className="card-soft p-5 flex items-center gap-4">
-                <div className="w-12 h-12 rounded-2xl bg-teal-50 text-teal-700 grid place-items-center">
+                <div className="w-12 h-12 rounded-2xl bg-teal-50 dark:bg-teal-900/40 text-teal-700 dark:text-teal-300 grid place-items-center">
                   <User2 className="w-6 h-6" />
                 </div>
                 <div>
-                  <div className="font-display text-lg text-slate-900">{result.parent.full_name}</div>
-                  <div className="text-xs text-slate-500">Parent • {maskAadhaar(result.parent.aadhaar)}</div>
+                  <div className="font-display text-lg text-slate-900 dark:text-slate-100">{result.parent.full_name}</div>
+                  <div className="text-xs text-slate-500 dark:text-slate-400">Parent • {maskAadhaar(result.parent.aadhaar)}</div>
                 </div>
               </div>
-              <h2 className="mt-8 text-lg font-display tracking-tight text-slate-800">Linked children</h2>
+              <h2 className="mt-8 text-lg font-display tracking-tight text-slate-800 dark:text-slate-200">Linked children</h2>
               {result.children.length === 0 ? (
-                <div className="card-soft p-8 mt-4 text-center text-slate-500">No children linked to this parent yet.</div>
+                <div className="card-soft p-8 mt-4 text-center text-slate-500 dark:text-slate-400">No children linked to this parent yet.</div>
               ) : (
                 <div className="grid md:grid-cols-2 gap-4 mt-4">
                   {result.children.map(c => <ChildResultCard key={c.id} c={c} onOpen={() => nav(`/doctor/child/${c.id}`)} />)}
@@ -85,7 +85,7 @@ export default function DoctorDashboard() {
             </>
           ) : (
             <>
-              <h2 className="text-lg font-display tracking-tight text-slate-800">Child</h2>
+              <h2 className="text-lg font-display tracking-tight text-slate-800 dark:text-slate-200">Child</h2>
               <div className="grid md:grid-cols-2 gap-4 mt-4">
                 {result.children.map(c => <ChildResultCard key={c.id} c={c} onOpen={() => nav(`/doctor/child/${c.id}`)} />)}
               </div>
@@ -100,14 +100,14 @@ export default function DoctorDashboard() {
 function ChildResultCard({ c, onOpen }) {
   return (
     <button data-testid={`doc-child-result-${c.id}`} onClick={onOpen} className="card-soft hover-lift p-5 text-left w-full flex items-center gap-4">
-      <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-teal-100 to-sky-100 text-teal-700 grid place-items-center">
+      <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-teal-100 to-sky-100 text-teal-700 dark:text-teal-300 grid place-items-center">
         <Baby className="w-6 h-6" />
       </div>
       <div className="flex-1 min-w-0">
-        <div className="font-display text-lg text-slate-900 truncate">{c.name}</div>
-        <div className="text-xs text-slate-500">{c.gender} • {ageString(c.dob)}</div>
+        <div className="font-display text-lg text-slate-900 dark:text-slate-100 truncate">{c.name}</div>
+        <div className="text-xs text-slate-500 dark:text-slate-400">{c.gender} • {ageString(c.dob)}</div>
       </div>
-      <ArrowRight className="w-4 h-4 text-slate-400" />
+      <ArrowRight className="w-4 h-4 text-slate-400 dark:text-slate-500" />
     </button>
   );
 }

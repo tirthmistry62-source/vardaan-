@@ -26,7 +26,7 @@ export default function VaccineInfoDialog({ vaccine, open, onOpenChange }) {
         className="rounded-3xl max-w-lg p-0 overflow-hidden max-h-[85vh] flex flex-col"
       >
         {/* Header */}
-        <div className="p-6 pb-5 bg-gradient-to-br from-teal-50 to-sky-50 border-b border-slate-200 dark:border-slate-800">
+        <div className="p-6 pb-5 bg-gradient-to-br from-teal-50 to-sky-50 dark:from-teal-900/40 dark:to-sky-900/40 border-b border-slate-200 dark:border-slate-800">
           <div className="flex items-start gap-3">
             <div className={`w-12 h-12 rounded-2xl grid place-items-center ${meta.cls} shrink-0`}>
               <StatusIcon className="w-6 h-6" strokeWidth={1.75} />
@@ -86,7 +86,7 @@ export default function VaccineInfoDialog({ vaccine, open, onOpenChange }) {
           )}
 
           {vaccine.record && (
-            <div className="rounded-2xl bg-slate-50 border border-slate-200 dark:border-slate-800 p-4">
+            <div className="rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-800 p-4">
               <div className="flex items-center gap-2 text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400 font-semibold">
                 <Stethoscope className="w-3.5 h-3.5" /> Recorded by
               </div>
@@ -96,7 +96,7 @@ export default function VaccineInfoDialog({ vaccine, open, onOpenChange }) {
                 <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">{vaccine.record.clinic_address}</div>
               )}
               {vaccine.record.weight_kg != null && (
-                <div className="mt-3 inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white border border-slate-200 dark:border-slate-800 text-xs">
+                <div className="mt-3 inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-xs">
                   <span className="text-slate-500 dark:text-slate-400">Weight at visit</span>
                   <span className="font-semibold text-slate-900 dark:text-slate-100">{vaccine.record.weight_kg} kg</span>
                 </div>

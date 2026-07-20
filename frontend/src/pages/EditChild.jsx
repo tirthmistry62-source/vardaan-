@@ -118,7 +118,7 @@ export default function EditChild() {
           </div>
           <div>
             <Label>Current weight (kg)</Label>
-            <div className="mt-2 flex items-stretch rounded-xl border border-slate-300 dark:border-slate-700 focus-within:ring-2 focus-within:ring-teal-500 dark:ring-teal-400/20 focus-within:border-teal-600 overflow-hidden bg-white">
+            <div className="mt-2 flex items-stretch rounded-xl border border-slate-300 dark:border-slate-700 focus-within:ring-2 focus-within:ring-teal-500 dark:ring-teal-400/20 focus-within:border-teal-600 overflow-hidden bg-white dark:bg-slate-900">
               <Input
                 data-testid="edit-child-weight"
                 type="number"
@@ -130,7 +130,7 @@ export default function EditChild() {
                 placeholder="e.g. 3.2"
                 className="flex-1 h-12 border-0 rounded-none focus-visible:ring-0 focus-visible:ring-offset-0 shadow-none"
               />
-              <span className="px-4 flex items-center bg-slate-50 text-slate-500 dark:text-slate-400 font-semibold border-l border-slate-200 dark:border-slate-800 select-none">kg</span>
+              <span className="px-4 flex items-center bg-slate-50 dark:bg-slate-800 text-slate-500 dark:text-slate-400 font-semibold border-l border-slate-200 dark:border-slate-800 select-none">kg</span>
             </div>
           </div>
           <Button data-testid="edit-child-save" type="submit" disabled={saving} className="h-12 rounded-full bg-teal-700 hover:bg-teal-800 text-white">

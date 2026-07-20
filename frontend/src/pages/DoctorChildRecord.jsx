@@ -119,9 +119,9 @@ export default function DoctorChildRecord() {
 
       <Tabs defaultValue="due" className="mt-8">
         <TabsList data-testid="doc-tabs" className="rounded-full h-11 bg-slate-100 dark:bg-slate-800 p-1">
-          <TabsTrigger value="due" data-testid="tab-due" className="rounded-full px-4 h-9 data-[state=active]:bg-white data-[state=active]:shadow-sm">Due & Overdue ({dueItems.length})</TabsTrigger>
-          <TabsTrigger value="history" data-testid="tab-history" className="rounded-full px-4 h-9 data-[state=active]:bg-white data-[state=active]:shadow-sm">History ({completedItems.length})</TabsTrigger>
-          <TabsTrigger value="all" data-testid="tab-all" className="rounded-full px-4 h-9 data-[state=active]:bg-white data-[state=active]:shadow-sm">All ({items.length})</TabsTrigger>
+          <TabsTrigger value="due" data-testid="tab-due" className="rounded-full px-4 h-9 data-[state=active]:bg-white dark:data-[state=active]:bg-slate-900 data-[state=active]:shadow-sm">Due & Overdue ({dueItems.length})</TabsTrigger>
+          <TabsTrigger value="history" data-testid="tab-history" className="rounded-full px-4 h-9 data-[state=active]:bg-white dark:data-[state=active]:bg-slate-900 data-[state=active]:shadow-sm">History ({completedItems.length})</TabsTrigger>
+          <TabsTrigger value="all" data-testid="tab-all" className="rounded-full px-4 h-9 data-[state=active]:bg-white dark:data-[state=active]:bg-slate-900 data-[state=active]:shadow-sm">All ({items.length})</TabsTrigger>
         </TabsList>
 
         <TabsContent value="due" className="mt-6">
@@ -154,7 +154,7 @@ export default function DoctorChildRecord() {
                 <label className="text-xs font-medium text-slate-600 dark:text-slate-400 flex items-center gap-1">
                   Weight now <span className="text-rose-500 dark:text-rose-400">*</span>
                 </label>
-                <div className="mt-1 flex items-stretch rounded-xl border border-slate-300 dark:border-slate-700 focus-within:ring-2 focus-within:ring-teal-500 dark:ring-teal-400/20 focus-within:border-teal-600 overflow-hidden bg-white">
+                <div className="mt-1 flex items-stretch rounded-xl border border-slate-300 dark:border-slate-700 focus-within:ring-2 focus-within:ring-teal-500 dark:ring-teal-400/20 focus-within:border-teal-600 overflow-hidden bg-white dark:bg-slate-900">
                   <Input
                     data-testid="doc-weight-input"
                     type="number"
@@ -166,7 +166,7 @@ export default function DoctorChildRecord() {
                     placeholder="e.g. 4.5"
                     className="flex-1 h-11 border-0 rounded-none focus-visible:ring-0 focus-visible:ring-offset-0 shadow-none"
                   />
-                  <span className="px-3 flex items-center bg-slate-50 text-slate-500 dark:text-slate-400 font-semibold border-l border-slate-200 dark:border-slate-800 select-none text-sm">kg</span>
+                  <span className="px-3 flex items-center bg-slate-50 dark:bg-slate-800 text-slate-500 dark:text-slate-400 font-semibold border-l border-slate-200 dark:border-slate-800 select-none text-sm">kg</span>
                 </div>
               </div>
               <Button data-testid="doc-record-submit" onClick={save} disabled={saving || !weightKg} className="h-12 rounded-full bg-teal-700 hover:bg-teal-800 text-white px-6 gap-2 self-stretch sm:self-auto">

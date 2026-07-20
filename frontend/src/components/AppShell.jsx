@@ -1,8 +1,9 @@
 import { Link, useNavigate } from "react-router-dom";
-import { Syringe, LogOut, Bell, ArrowLeft, Settings } from "lucide-react";
+import { LogOut, Bell, ArrowLeft, Settings } from "lucide-react";
 import { clearSession, getSession } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import ThemeToggle from "@/components/ThemeToggle";
+import LeafLogo from "@/components/LeafLogo";
 
 export default function AppShell({ children, showNotifications = false, unreadCount = 0, showBack = false, backTo = null, settingsPath = null }) {
   const nav = useNavigate();
@@ -31,8 +32,8 @@ export default function AppShell({ children, showNotifications = false, unreadCo
               </Button>
             )}
             <Link to="/" data-testid="brand-logo" className="flex items-center gap-2 min-w-0">
-              <div className="w-9 h-9 rounded-xl bg-teal-700 text-white grid place-items-center shrink-0">
-                <Syringe className="w-5 h-5" strokeWidth={1.75} />
+              <div className="w-9 h-9 rounded-xl bg-white dark:bg-slate-800 border border-emerald-100 dark:border-emerald-900/50 grid place-items-center shrink-0 shadow-sm">
+                <LeafLogo size={22} />
               </div>
               <span className="font-display text-lg tracking-tight truncate">Vardaan+</span>
             </Link>

@@ -1,32 +1,71 @@
-"""Vardaan+ backend - lifelong vaccination record management."""
+"""Vardaan+ backend - Supabase Postgres via REST API (PostgREST)."""
 from fastapi import FastAPI, APIRouter, HTTPException, Depends, Header
-from fastapi.security import HTTPBearer
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
-from motor.motor_asyncio import AsyncIOMotorClient
 import os
 import logging
 import uuid
 import bcrypt
 import jwt
+import httpx
 from pathlib import Path
-from pydantic import BaseModel, Field
-from typing import List, Optional
+from pydantic import BaseModel
+from typing import List, Optional, Any
 from datetime import datetime, timezone, timedelta
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
 
-mongo_url = os.environ['MONGO_URL']
-client = AsyncIOMotorClient(mongo_url)
-db = client[os.environ['DB_NAME']]
+SUPABASE_URL = os.environ['SUPABASE_URL'].rstrip('/')
+SUPABASE_KEY = os.environ['SUPABASE_SERVICE_ROLE_KEY']
+REST_BASE = f"{SUPABASE_URL}/rest/v1"
 
-JWT_SECRET = os.environ.get('JWT_SECRET', 'vaxledger-dev-secret-change-me')
+JWT_SECRET = os.environ.get('JWT_SECRET', 'vardaan-dev-secret-change-me')
 JWT_ALGO = 'HS256'
-JWT_TTL_HOURS = 24 * 30  # 30 days
+JWT_TTL_HOURS = 24 * 30
+
+_headers = {
+    "apikey": SUPABASE_KEY,
+    "Authorization": f"Bearer {SUPABASE_KEY}",
+    "Content-Type": "application/json",
+    "Prefer": "return=representation",
+}
+http = httpx.AsyncClient(timeout=30, headers=_headers, base_url=REST_BASE)
 
 app = FastAPI(title="Vardaan+ API")
 api = APIRouter(prefix="/api")
+
+# ------------- Supabase helpers -------------
+
+async def sb_select(table: str, query: str = "select=*") -> List[dict]:
+    r = await http.get(f"/{table}?{query}")
+    if r.status_code >= 400:
+        raise HTTPException(500, f"DB error: {r.text}")
+    return r.json()
+
+async def sb_find_one(table: str, filters: str) -> Optional[dict]:
+    rows = await sb_select(table, f"select=*&{filters}&limit=1")
+    return rows[0] if rows else None
+
+async def sb_insert(table: str, row: dict) -> dict:
+    r = await http.post(f"/{table}", json=row)
+    if r.status_code >= 400:
+        raise HTTPException(500, f"DB error: {r.text}")
+    return r.json()[0]
+
+async def sb_update(table: str, filters: str, updates: dict) -> List[dict]:
+    r = await http.patch(f"/{table}?{filters}", json=updates)
+    if r.status_code >= 400:
+        raise HTTPException(500, f"DB error: {r.text}")
+    return r.json()
+
+async def sb_delete(table: str, filters: str) -> None:
+    r = await http.delete(f"/{table}?{filters}")
+    if r.status_code >= 400:
+        raise HTTPException(500, f"DB error: {r.text}")
+
+def eq(field: str, value: Any) -> str:
+    return f"{field}=eq.{value}"
 
 # ------------- Utilities -------------
 
@@ -73,11 +112,14 @@ async def require_doctor(cur=Depends(get_current)) -> dict:
         raise HTTPException(status_code=403, detail="Doctor access only")
     return cur
 
+def strip_secret(row: dict) -> dict:
+    return {k: v for k, v in row.items() if k != 'password_hash'}
+
 # ------------- Models -------------
 
 class ParentRegisterIn(BaseModel):
     full_name: str
-    aadhaar: str  # 12 digits, username
+    aadhaar: str
     phone: str
     password: str
 
@@ -87,7 +129,7 @@ class ParentLoginIn(BaseModel):
 
 class DoctorRegisterIn(BaseModel):
     doctor_name: str
-    phone: str  # login id
+    phone: str
     password: str
     clinic_name: str
     clinic_address: str
@@ -99,7 +141,7 @@ class DoctorLoginIn(BaseModel):
 
 class ChildCreateIn(BaseModel):
     name: str
-    dob: str  # ISO date YYYY-MM-DD
+    dob: str
     gender: str
     weight_kg: float
     mother_aadhaar: Optional[str] = None
@@ -109,7 +151,7 @@ class ChildCreateIn(BaseModel):
 class VaccinationRecordIn(BaseModel):
     child_id: str
     weight_kg: float
-    entries: List[dict]  # [{vaccine_code, vaccine_name, dose, remarks}]
+    entries: List[dict]
 
 class ParentUpdateIn(BaseModel):
     full_name: Optional[str] = None
@@ -152,9 +194,9 @@ async def parent_register(body: ParentRegisterIn):
         raise HTTPException(400, "Invalid phone number")
     if len(body.password) < 6:
         raise HTTPException(400, "Password must be at least 6 characters")
-    if await db.parents.find_one({'aadhaar': body.aadhaar}):
+    if await sb_find_one('parents', eq('aadhaar', body.aadhaar)):
         raise HTTPException(409, "Aadhaar already registered")
-    if await db.parents.find_one({'phone': body.phone}):
+    if await sb_find_one('parents', eq('phone', body.phone)):
         raise HTTPException(409, "Phone already registered")
     doc = {
         'id': str(uuid.uuid4()),
@@ -164,24 +206,24 @@ async def parent_register(body: ParentRegisterIn):
         'password_hash': hash_password(body.password),
         'created_at': now_iso(),
     }
-    await db.parents.insert_one(doc)
-    token = make_token(doc['id'], 'parent')
-    return {'token': token, 'parent': {'id': doc['id'], 'full_name': doc['full_name'], 'aadhaar': doc['aadhaar'], 'phone': doc['phone']}}
+    p = await sb_insert('parents', doc)
+    token = make_token(p['id'], 'parent')
+    return {'token': token, 'parent': strip_secret(p)}
 
 @api.post('/parent/login')
 async def parent_login(body: ParentLoginIn):
-    p = await db.parents.find_one({'aadhaar': body.aadhaar})
+    p = await sb_find_one('parents', eq('aadhaar', body.aadhaar))
     if not p or not verify_password(body.password, p['password_hash']):
         raise HTTPException(401, "Invalid Aadhaar or password")
     token = make_token(p['id'], 'parent')
-    return {'token': token, 'parent': {'id': p['id'], 'full_name': p['full_name'], 'aadhaar': p['aadhaar'], 'phone': p['phone']}}
+    return {'token': token, 'parent': strip_secret(p)}
 
 @api.get('/parent/me')
 async def parent_me(cur=Depends(require_parent)):
-    p = await db.parents.find_one({'id': cur['user_id']}, {'_id': 0, 'password_hash': 0})
+    p = await sb_find_one('parents', eq('id', cur['user_id']))
     if not p:
         raise HTTPException(404, "Parent not found")
-    return p
+    return strip_secret(p)
 
 # ------------- Auth: Doctor -------------
 
@@ -191,7 +233,7 @@ async def doctor_register(body: DoctorRegisterIn):
         raise HTTPException(400, "Invalid phone number")
     if len(body.password) < 6:
         raise HTTPException(400, "Password must be at least 6 characters")
-    if await db.doctors.find_one({'phone': body.phone}):
+    if await sb_find_one('doctors', eq('phone', body.phone)):
         raise HTTPException(409, "Phone already registered")
     doc = {
         'id': str(uuid.uuid4()),
@@ -203,38 +245,37 @@ async def doctor_register(body: DoctorRegisterIn):
         'profile_photo_url': body.profile_photo_url,
         'created_at': now_iso(),
     }
-    await db.doctors.insert_one(doc)
-    token = make_token(doc['id'], 'doctor')
-    return {'token': token, 'doctor': {k: doc[k] for k in ('id', 'doctor_name', 'phone', 'clinic_name', 'clinic_address', 'profile_photo_url')}}
+    d = await sb_insert('doctors', doc)
+    token = make_token(d['id'], 'doctor')
+    return {'token': token, 'doctor': strip_secret(d)}
 
 @api.post('/doctor/login')
 async def doctor_login(body: DoctorLoginIn):
-    d = await db.doctors.find_one({'phone': body.phone})
+    d = await sb_find_one('doctors', eq('phone', body.phone))
     if not d or not verify_password(body.password, d['password_hash']):
         raise HTTPException(401, "Invalid phone or password")
     token = make_token(d['id'], 'doctor')
-    return {'token': token, 'doctor': {k: d[k] for k in ('id', 'doctor_name', 'phone', 'clinic_name', 'clinic_address', 'profile_photo_url')}}
+    return {'token': token, 'doctor': strip_secret(d)}
 
 @api.get('/doctor/me')
 async def doctor_me(cur=Depends(require_doctor)):
-    d = await db.doctors.find_one({'id': cur['user_id']}, {'_id': 0, 'password_hash': 0})
+    d = await sb_find_one('doctors', eq('id', cur['user_id']))
     if not d:
         raise HTTPException(404, "Doctor not found")
-    return d
+    return strip_secret(d)
 
 @api.patch('/doctor/me')
 async def doctor_update(body: DoctorUpdateIn, cur=Depends(require_doctor)):
     updates = {}
     if body.doctor_name is not None:
-        name = body.doctor_name.strip()
-        if not name:
+        if not body.doctor_name.strip():
             raise HTTPException(400, "Name cannot be empty")
-        updates['doctor_name'] = name
+        updates['doctor_name'] = body.doctor_name.strip()
     if body.phone is not None:
         if not valid_phone(body.phone):
             raise HTTPException(400, "Invalid phone number")
-        existing = await db.doctors.find_one({'phone': body.phone, 'id': {'$ne': cur['user_id']}})
-        if existing:
+        other = await sb_find_one('doctors', f"{eq('phone', body.phone)}&id=neq.{cur['user_id']}")
+        if other:
             raise HTTPException(409, "Phone already registered")
         updates['phone'] = body.phone
     if body.clinic_name is not None:
@@ -249,30 +290,71 @@ async def doctor_update(body: DoctorUpdateIn, cur=Depends(require_doctor)):
         updates['profile_photo_url'] = body.profile_photo_url or None
     if not updates:
         raise HTTPException(400, "Nothing to update")
-    await db.doctors.update_one({'id': cur['user_id']}, {'$set': updates})
-    d = await db.doctors.find_one({'id': cur['user_id']}, {'_id': 0, 'password_hash': 0})
-    return d
+    await sb_update('doctors', eq('id', cur['user_id']), updates)
+    d = await sb_find_one('doctors', eq('id', cur['user_id']))
+    return strip_secret(d)
+
+CONFIRM_DELETE_PARENT = "DELETE MY ACCOUNT"
 
 @api.post('/doctor/me/delete')
 async def doctor_delete(body: ConfirmDeleteIn, cur=Depends(require_doctor)):
     if body.confirm_phrase.strip() != CONFIRM_DELETE_PARENT:
         raise HTTPException(400, f'You must type exactly: "{CONFIRM_DELETE_PARENT}"')
-    doctor = await db.doctors.find_one({'id': cur['user_id']})
-    if not doctor:
-        raise HTTPException(404, "Doctor not found")
-    # NOTE: vaccination records are medical history — we keep them (with the doctor's name snapshot).
-    await db.doctors.delete_one({'id': cur['user_id']})
+    await sb_delete('doctors', eq('id', cur['user_id']))
+    return {'ok': True}
+
+# ------------- Parent profile update / delete -------------
+
+@api.patch('/parent/me')
+async def parent_update(body: ParentUpdateIn, cur=Depends(require_parent)):
+    updates = {}
+    if body.full_name is not None:
+        if not body.full_name.strip():
+            raise HTTPException(400, "Name cannot be empty")
+        updates['full_name'] = body.full_name.strip()
+    if body.phone is not None:
+        if not valid_phone(body.phone):
+            raise HTTPException(400, "Invalid phone number")
+        other = await sb_find_one('parents', f"{eq('phone', body.phone)}&id=neq.{cur['user_id']}")
+        if other:
+            raise HTTPException(409, "Phone already registered")
+        updates['phone'] = body.phone
+    if not updates:
+        raise HTTPException(400, "Nothing to update")
+    await sb_update('parents', eq('id', cur['user_id']), updates)
+    p = await sb_find_one('parents', eq('id', cur['user_id']))
+    return strip_secret(p)
+
+@api.post('/parent/me/delete')
+async def parent_delete(body: ConfirmDeleteIn, cur=Depends(require_parent)):
+    if body.confirm_phrase.strip() != CONFIRM_DELETE_PARENT:
+        raise HTTPException(400, f'You must type exactly: "{CONFIRM_DELETE_PARENT}"')
+    parent = await sb_find_one('parents', eq('id', cur['user_id']))
+    if not parent:
+        raise HTTPException(404, "Parent not found")
+    my_aadhaar = parent['aadhaar']
+    # Cascade: for each linked child, unlink me; delete only if no other parent Aadhaar remains
+    kids = await sb_select('children', f"select=*&or=(mother_aadhaar.eq.{my_aadhaar},father_aadhaar.eq.{my_aadhaar})")
+    for k in kids:
+        mother = k.get('mother_aadhaar') if k.get('mother_aadhaar') != my_aadhaar else None
+        father = k.get('father_aadhaar') if k.get('father_aadhaar') != my_aadhaar else None
+        if mother or father:
+            await sb_update('children', eq('id', k['id']), {'mother_aadhaar': mother, 'father_aadhaar': father})
+        else:
+            await sb_delete('children', eq('id', k['id']))  # ON DELETE CASCADE removes vaccinations
+    await sb_delete('notifications', eq('parent_id', cur['user_id']))
+    await sb_delete('parents', eq('id', cur['user_id']))
     return {'ok': True}
 
 # ------------- Children -------------
 
-async def _child_public(child_doc: dict) -> dict:
-    vaccinations = await db.vaccinations.find({'child_id': child_doc['id']}, {'_id': 0}).to_list(1000)
-    return {**{k: v for k, v in child_doc.items() if k != '_id'}, 'vaccinations': vaccinations}
+async def _child_public(child: dict) -> dict:
+    vacs = await sb_select('vaccinations', f"select=*&{eq('child_id', child['id'])}")
+    return {**child, 'vaccinations': vacs}
 
 @api.post('/parent/children')
 async def add_child(body: ChildCreateIn, cur=Depends(require_parent)):
-    parent = await db.parents.find_one({'id': cur['user_id']})
+    parent = await sb_find_one('parents', eq('id', cur['user_id']))
     if not parent:
         raise HTTPException(404, "Parent not found")
     for a in (body.mother_aadhaar, body.father_aadhaar, body.child_aadhaar):
@@ -282,7 +364,6 @@ async def add_child(body: ChildCreateIn, cur=Depends(require_parent)):
         raise HTTPException(400, "Provide at least mother or father Aadhaar")
     if body.weight_kg is None or body.weight_kg <= 0 or body.weight_kg > 200:
         raise HTTPException(400, "Enter a valid weight in kg")
-    # Auto-link: parent's aadhaar must match one of the given fields
     if parent['aadhaar'] not in (body.mother_aadhaar, body.father_aadhaar):
         raise HTTPException(400, "Your Aadhaar must be entered as mother's or father's Aadhaar")
     doc = {
@@ -297,163 +378,30 @@ async def add_child(body: ChildCreateIn, cur=Depends(require_parent)):
         'created_by': parent['id'],
         'created_at': now_iso(),
     }
-    await db.children.insert_one(doc)
-    return await _child_public(doc)
+    child = await sb_insert('children', doc)
+    return await _child_public(child)
 
 @api.get('/parent/children')
 async def list_children(cur=Depends(require_parent)):
-    parent = await db.parents.find_one({'id': cur['user_id']})
+    parent = await sb_find_one('parents', eq('id', cur['user_id']))
     aadhaar = parent['aadhaar']
-    kids = await db.children.find(
-        {'$or': [{'mother_aadhaar': aadhaar}, {'father_aadhaar': aadhaar}]},
-        {'_id': 0}
-    ).to_list(1000)
-    result = []
-    for k in kids:
-        result.append(await _child_public(k))
-    return result
+    kids = await sb_select('children', f"select=*&or=(mother_aadhaar.eq.{aadhaar},father_aadhaar.eq.{aadhaar})")
+    return [await _child_public(k) for k in kids]
 
 @api.get('/children/{child_id}')
 async def get_child(child_id: str, cur=Depends(get_current)):
-    child = await db.children.find_one({'id': child_id}, {'_id': 0})
+    child = await sb_find_one('children', eq('id', child_id))
     if not child:
         raise HTTPException(404, "Child not found")
     if cur['role'] == 'parent':
-        parent = await db.parents.find_one({'id': cur['user_id']})
+        parent = await sb_find_one('parents', eq('id', cur['user_id']))
         if parent['aadhaar'] not in (child.get('mother_aadhaar'), child.get('father_aadhaar')):
             raise HTTPException(403, "Not your child")
     return await _child_public(child)
 
-# ------------- Doctor Search -------------
-
-@api.get('/doctor/search')
-async def doctor_search(aadhaar: str, cur=Depends(require_doctor)):
-    if not valid_aadhaar(aadhaar):
-        raise HTTPException(400, "Aadhaar must be 12 digits")
-    # Check if it's a parent
-    parent = await db.parents.find_one({'aadhaar': aadhaar}, {'_id': 0, 'password_hash': 0})
-    if parent:
-        kids = await db.children.find(
-            {'$or': [{'mother_aadhaar': aadhaar}, {'father_aadhaar': aadhaar}]},
-            {'_id': 0}
-        ).to_list(1000)
-        return {'match_type': 'parent', 'parent': parent, 'children': kids}
-    # Check if it's a child
-    child = await db.children.find_one({'child_aadhaar': aadhaar}, {'_id': 0})
-    if child:
-        return {'match_type': 'child', 'children': [child]}
-    raise HTTPException(404, "No records found for this Aadhaar")
-
-# ------------- Vaccinations -------------
-
-@api.post('/doctor/vaccinations')
-async def record_vaccinations(body: VaccinationRecordIn, cur=Depends(require_doctor)):
-    doctor = await db.doctors.find_one({'id': cur['user_id']})
-    child = await db.children.find_one({'id': body.child_id}, {'_id': 0})
-    if not child:
-        raise HTTPException(404, "Child not found")
-    if not body.entries:
-        raise HTTPException(400, "No vaccines selected")
-    if body.weight_kg is None or body.weight_kg <= 0 or body.weight_kg > 200:
-        raise HTTPException(400, "Enter the child's current weight in kg")
-    weight = round(float(body.weight_kg), 2)
-
-    created = []
-    for e in body.entries:
-        if not e.get('vaccine_code') or not e.get('vaccine_name') or not e.get('dose'):
-            raise HTTPException(400, "Vaccine entry missing fields")
-        vdoc = {
-            'id': str(uuid.uuid4()),
-            'child_id': body.child_id,
-            'vaccine_code': e['vaccine_code'],
-            'vaccine_name': e['vaccine_name'],
-            'dose': e['dose'],
-            'date_given': e.get('date_given') or now_iso(),
-            'weight_kg': weight,
-            'doctor_id': doctor['id'],
-            'doctor_name': doctor['doctor_name'],
-            'doctor_phone': doctor['phone'],
-            'clinic_name': doctor['clinic_name'],
-            'clinic_address': doctor['clinic_address'],
-            'remarks': e.get('remarks', ''),
-            'is_historical': False,
-            'created_at': now_iso(),
-        }
-        await db.vaccinations.insert_one(vdoc)
-        created.append({k: v for k, v in vdoc.items() if k != '_id'})
-
-    # Create notifications for both parents linked to this child
-    parent_aadhaars = [a for a in (child.get('mother_aadhaar'), child.get('father_aadhaar')) if a]
-    for aad in parent_aadhaars:
-        parent = await db.parents.find_one({'aadhaar': aad})
-        if parent:
-            for v in created:
-                notif = {
-                    'id': str(uuid.uuid4()),
-                    'parent_id': parent['id'],
-                    'title': f"{v['vaccine_name']} recorded",
-                    'body': f"Dr. {v['doctor_name']} recorded {v['vaccine_name']} ({v['dose']}) for {child['name']} at {v['clinic_name']}",
-                    'child_id': child['id'],
-                    'vaccination_id': v['id'],
-                    'read': False,
-                    'created_at': now_iso(),
-                }
-                await db.notifications.insert_one(notif)
-
-    return {'created': created}
-
-# ------------- Parent profile update / delete -------------
-
-@api.patch('/parent/me')
-async def parent_update(body: ParentUpdateIn, cur=Depends(require_parent)):
-    updates = {}
-    if body.full_name is not None:
-        name = body.full_name.strip()
-        if not name:
-            raise HTTPException(400, "Name cannot be empty")
-        updates['full_name'] = name
-    if body.phone is not None:
-        if not valid_phone(body.phone):
-            raise HTTPException(400, "Invalid phone number")
-        existing = await db.parents.find_one({'phone': body.phone, 'id': {'$ne': cur['user_id']}})
-        if existing:
-            raise HTTPException(409, "Phone already registered")
-        updates['phone'] = body.phone
-    if not updates:
-        raise HTTPException(400, "Nothing to update")
-    await db.parents.update_one({'id': cur['user_id']}, {'$set': updates})
-    p = await db.parents.find_one({'id': cur['user_id']}, {'_id': 0, 'password_hash': 0})
-    return p
-
-CONFIRM_DELETE_PARENT = "DELETE MY ACCOUNT"
-
-@api.post('/parent/me/delete')
-async def parent_delete(body: ConfirmDeleteIn, cur=Depends(require_parent)):
-    if body.confirm_phrase.strip() != CONFIRM_DELETE_PARENT:
-        raise HTTPException(400, f'You must type exactly: "{CONFIRM_DELETE_PARENT}"')
-    parent = await db.parents.find_one({'id': cur['user_id']})
-    if not parent:
-        raise HTTPException(404, "Parent not found")
-    my_aadhaar = parent['aadhaar']
-    # For each linked child, unlink me — if no other parent aadhaar remains, delete the child.
-    kids = await db.children.find({'$or': [{'mother_aadhaar': my_aadhaar}, {'father_aadhaar': my_aadhaar}]}).to_list(1000)
-    for k in kids:
-        mother = k.get('mother_aadhaar') if k.get('mother_aadhaar') != my_aadhaar else None
-        father = k.get('father_aadhaar') if k.get('father_aadhaar') != my_aadhaar else None
-        if mother or father:
-            await db.children.update_one({'id': k['id']}, {'$set': {'mother_aadhaar': mother, 'father_aadhaar': father}})
-        else:
-            await db.children.delete_one({'id': k['id']})
-            await db.vaccinations.delete_many({'child_id': k['id']})
-    await db.notifications.delete_many({'parent_id': cur['user_id']})
-    await db.parents.delete_one({'id': cur['user_id']})
-    return {'ok': True}
-
-# ------------- Child update / delete -------------
-
 async def _assert_parent_owns_child(parent_id: str, child_id: str):
-    parent = await db.parents.find_one({'id': parent_id})
-    child = await db.children.find_one({'id': child_id})
+    parent = await sb_find_one('parents', eq('id', parent_id))
+    child = await sb_find_one('children', eq('id', child_id))
     if not child:
         raise HTTPException(404, "Child not found")
     if parent['aadhaar'] not in (child.get('mother_aadhaar'), child.get('father_aadhaar')):
@@ -487,51 +435,113 @@ async def child_update(child_id: str, body: ChildUpdateIn, cur=Depends(require_p
                 raise HTTPException(400, "Aadhaar must be 12 digits")
             else:
                 updates[fld] = val
-    # After change, parent must still own the child
     new_mother = updates.get('mother_aadhaar', child.get('mother_aadhaar'))
     new_father = updates.get('father_aadhaar', child.get('father_aadhaar'))
     if parent['aadhaar'] not in (new_mother, new_father):
         raise HTTPException(400, "Your Aadhaar must remain as mother's or father's Aadhaar")
     if not updates:
         raise HTTPException(400, "Nothing to update")
-    await db.children.update_one({'id': child_id}, {'$set': updates})
-    fresh = await db.children.find_one({'id': child_id}, {'_id': 0})
+    await sb_update('children', eq('id', child_id), updates)
+    fresh = await sb_find_one('children', eq('id', child_id))
     return await _child_public(fresh)
 
 CONFIRM_DELETE_CHILD_TEMPLATE = 'Yes, I want to delete {name}\'s account, and I approve that the vaccination details and history will be permanently deleted and cannot be recovered.'
 
 @api.post('/parent/children/{child_id}/delete')
 async def child_delete(child_id: str, body: ConfirmDeleteIn, cur=Depends(require_parent)):
-    parent, child = await _assert_parent_owns_child(cur['user_id'], child_id)
+    _, child = await _assert_parent_owns_child(cur['user_id'], child_id)
     expected = CONFIRM_DELETE_CHILD_TEMPLATE.format(name=child['name'])
     if body.confirm_phrase.strip() != expected:
         raise HTTPException(400, f'You must type exactly: "{expected}"')
-    await db.children.delete_one({'id': child_id})
-    await db.vaccinations.delete_many({'child_id': child_id})
-    await db.notifications.delete_many({'child_id': child_id})
+    await sb_delete('notifications', eq('child_id', child_id))
+    await sb_delete('children', eq('id', child_id))  # vaccinations cascade
     return {'ok': True}
+
+# ------------- Doctor search -------------
+
+@api.get('/doctor/search')
+async def doctor_search(aadhaar: str, cur=Depends(require_doctor)):
+    if not valid_aadhaar(aadhaar):
+        raise HTTPException(400, "Aadhaar must be 12 digits")
+    parent = await sb_find_one('parents', eq('aadhaar', aadhaar))
+    if parent:
+        kids = await sb_select('children', f"select=*&or=(mother_aadhaar.eq.{aadhaar},father_aadhaar.eq.{aadhaar})")
+        return {'match_type': 'parent', 'parent': strip_secret(parent), 'children': kids}
+    child = await sb_find_one('children', eq('child_aadhaar', aadhaar))
+    if child:
+        return {'match_type': 'child', 'children': [child]}
+    raise HTTPException(404, "No records found for this Aadhaar")
+
+# ------------- Vaccinations -------------
+
+@api.post('/doctor/vaccinations')
+async def record_vaccinations(body: VaccinationRecordIn, cur=Depends(require_doctor)):
+    doctor = await sb_find_one('doctors', eq('id', cur['user_id']))
+    child = await sb_find_one('children', eq('id', body.child_id))
+    if not child:
+        raise HTTPException(404, "Child not found")
+    if not body.entries:
+        raise HTTPException(400, "No vaccines selected")
+    if body.weight_kg is None or body.weight_kg <= 0 or body.weight_kg > 200:
+        raise HTTPException(400, "Enter the child's current weight in kg")
+    weight = round(float(body.weight_kg), 2)
+
+    created = []
+    for e in body.entries:
+        if not e.get('vaccine_code') or not e.get('vaccine_name') or not e.get('dose'):
+            raise HTTPException(400, "Vaccine entry missing fields")
+        vrow = {
+            'id': str(uuid.uuid4()),
+            'child_id': body.child_id,
+            'vaccine_code': e['vaccine_code'],
+            'vaccine_name': e['vaccine_name'],
+            'dose': e['dose'],
+            'date_given': e.get('date_given') or now_iso(),
+            'weight_kg': weight,
+            'doctor_id': doctor['id'],
+            'doctor_name': doctor['doctor_name'],
+            'doctor_phone': doctor['phone'],
+            'clinic_name': doctor['clinic_name'],
+            'clinic_address': doctor['clinic_address'],
+            'remarks': e.get('remarks', ''),
+            'is_historical': False,
+            'created_at': now_iso(),
+        }
+        inserted = await sb_insert('vaccinations', vrow)
+        created.append(inserted)
+
+    parent_aadhaars = [a for a in (child.get('mother_aadhaar'), child.get('father_aadhaar')) if a]
+    for aad in parent_aadhaars:
+        parent = await sb_find_one('parents', eq('aadhaar', aad))
+        if parent:
+            for v in created:
+                await sb_insert('notifications', {
+                    'id': str(uuid.uuid4()),
+                    'parent_id': parent['id'],
+                    'title': f"{v['vaccine_name']} recorded",
+                    'body': f"Dr. {v['doctor_name']} recorded {v['vaccine_name']} ({v['dose']}) for {child['name']} at {v['clinic_name']}",
+                    'child_id': child['id'],
+                    'vaccination_id': v['id'],
+                    'read': False,
+                    'created_at': now_iso(),
+                })
+
+    return {'created': created}
 
 # ------------- Notifications -------------
 
 @api.get('/parent/notifications')
 async def get_notifications(cur=Depends(require_parent)):
-    items = await db.notifications.find(
-        {'parent_id': cur['user_id']},
-        {'_id': 0}
-    ).sort('created_at', -1).to_list(200)
-    return items
+    return await sb_select('notifications', f"select=*&{eq('parent_id', cur['user_id'])}&order=created_at.desc&limit=200")
 
 @api.post('/parent/notifications/{nid}/read')
 async def mark_read(nid: str, cur=Depends(require_parent)):
-    await db.notifications.update_one(
-        {'id': nid, 'parent_id': cur['user_id']},
-        {'$set': {'read': True}}
-    )
+    await sb_update('notifications', f"{eq('id', nid)}&{eq('parent_id', cur['user_id'])}", {'read': True})
     return {'ok': True}
 
 @api.get('/')
 async def root():
-    return {'app': 'Vardaan+', 'status': 'ok'}
+    return {'app': 'Vardaan+', 'db': 'supabase-postgres', 'status': 'ok'}
 
 app.include_router(api)
 
@@ -547,5 +557,5 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(level
 logger = logging.getLogger(__name__)
 
 @app.on_event("shutdown")
-async def shutdown_db_client():
-    client.close()
+async def shutdown_client():
+    await http.aclose()

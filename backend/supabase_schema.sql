@@ -1,86 +1,139 @@
--- Vardaan+ database schema for Supabase Postgres
--- Run this ONCE in Supabase Dashboard → SQL Editor → New query → Paste all → Run
+-- VARDAAN+ COMPLETE DATABASE SCHEMA
+-- Run this ONCE in Supabase Dashboard → SQL Editor → New Query
 
--- Parents
-create table if not exists parents (
-    id uuid primary key,
-    full_name text not null,
-    aadhaar text not null unique,
-    phone text not null unique,
-    password_hash text not null,
-    created_at timestamptz not null default now()
+-- Step 1: Create PARENTS table first
+CREATE TABLE IF NOT EXISTS parents (
+    id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    full_name text NOT NULL,
+    aadhaar text NOT NULL UNIQUE,
+    phone text NOT NULL UNIQUE,
+    access_code text NOT NULL UNIQUE,
+    password_hash text NOT NULL,
+    created_at timestamptz NOT NULL DEFAULT now()
 );
-create index if not exists idx_parents_aadhaar on parents(aadhaar);
-create index if not exists idx_parents_phone on parents(phone);
 
--- Doctors
-create table if not exists doctors (
-    id uuid primary key,
-    doctor_name text not null,
-    phone text not null unique,
-    password_hash text not null,
-    clinic_name text not null,
-    clinic_address text not null,
+-- Step 2: Create DOCTORS table
+CREATE TABLE IF NOT EXISTS doctors (
+    id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    doctor_name text NOT NULL,
+    phone text NOT NULL UNIQUE,
+    password_hash text NOT NULL,
+    clinic_name text NOT NULL,
+
+    clinic_address text NOT NULL,
     profile_photo_url text,
-    created_at timestamptz not null default now()
+    created_at timestamptz NOT NULL DEFAULT now()
 );
-create index if not exists idx_doctors_phone on doctors(phone);
 
--- Children
-create table if not exists children (
-    id uuid primary key,
-    name text not null,
-    dob date not null,
-    gender text not null,
+-- Step 3: Create CHILDREN table
+CREATE TABLE IF NOT EXISTS children (
+    id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    name text NOT NULL,
+    dob date NOT NULL,
+    gender text NOT NULL,
     weight_kg numeric(5,2),
     mother_aadhaar text,
-    father_aadhaar text,
+    father_aadhaar text,ome
     child_aadhaar text,
     created_by uuid,
-    created_at timestamptz not null default now()
+    created_at timestamptz NOT NULL DEFAULT now()
 );
-create index if not exists idx_children_mother on children(mother_aadhaar);
-create index if not exists idx_children_father on children(father_aadhaar);
-create index if not exists idx_children_child_aadhaar on children(child_aadhaar);
 
--- Vaccinations
-create table if not exists vaccinations (
-    id uuid primary key,
-    child_id uuid not null references children(id) on delete cascade,
-    vaccine_code text not null,
-    vaccine_name text not null,
-    dose text not null,
-    date_given timestamptz not null,
+-- Step 4: Create VACCINATIONS table
+CREATE TABLE IF NOT EXISTS vaccinations (
+    id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    child_id uuid NOT NULL REFERENCES children(id) ON DELETE CASCADE,
+    vaccine_code text NOT NULL,
+    vaccine_name text NOT NULL,
+    dose text NOT NULL,
+    date_given timestamptz NOT NULL,
     weight_kg numeric(5,2),
     doctor_id uuid,
     doctor_name text,
     doctor_phone text,
     clinic_name text,
     clinic_address text,
-    remarks text default '',
-    is_historical boolean default false,
-    created_at timestamptz not null default now()
+    remarks text DEFAULT '',
+    is_historical boolean DEFAULT false,
+    created_at timestamptz NOT NULL DEFAULT now()
 );
-create index if not exists idx_vaccinations_child on vaccinations(child_id);
 
--- Notifications
-create table if not exists notifications (
-    id uuid primary key,
-    parent_id uuid not null,
-    title text not null,
-    body text not null,
+-- Step 5: Create VACCINATION_DOCUMENTS table
+CREATE TABLE IF NOT EXISTS vaccination_documents (
+    id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    vaccination_id uuid NOT NULL REFERENCES vaccinations(id) ON DELETE CASCADE,
+    child_id uuid NOT NULL REFERENCES children(id) ON DELETE CASCADE,
+    uploaded_by_parent_id uuid REFERENCES parents(id) ON DELETE SET NULL,
+    document_url text NOT NULL,
+    document_type text,
+    file_name text,
+    file_size_bytes integer,
+    mime_type text,
+    uploaded_at timestamptz NOT NULL DEFAULT now()
+);
+
+-- Step 6: Create DEVICE_TOKENS table
+CREATE TABLE IF NOT EXISTS device_tokens (
+    id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    parent_id uuid NOT NULL REFERENCES parents(id) ON DELETE CASCADE,
+    fcm_token text NOT NULL UNIQUE,
+    device_name text,
+    device_type text,
+    is_active boolean DEFAULT true,
+    last_used timestamptz,
+    created_at timestamptz NOT NULL DEFAULT now()
+);
+
+-- Step 7: Create VACCINATION_REMINDERS table
+CREATE TABLE IF NOT EXISTS vaccination_reminders (
+    id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    child_id uuid NOT NULL REFERENCES children(id) ON DELETE CASCADE,
+    vaccine_code text NOT NULL,
+    vaccine_name text NOT NULL,
+    dose text NOT NULL,
+    due_date date NOT NULL,
+    reminder_days_before integer NOT NULL,
+    notification_id uuid,
+    created_at timestamptz NOT NULL DEFAULT now()
+);
+
+-- Step 8: Create NOTIFICATIONS table
+CREATE TABLE IF NOT EXISTS notifications (
+    id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    parent_id uuid NOT NULL REFERENCES parents(id) ON DELETE CASCADE,
+    title text NOT NULL,
+    body text NOT NULL,
     child_id uuid,
     vaccination_id uuid,
-    read boolean default false,
-    created_at timestamptz not null default now()
+    read boolean DEFAULT false,
+    created_at timestamptz NOT NULL DEFAULT now()
 );
-create index if not exists idx_notifications_parent on notifications(parent_id);
-create index if not exists idx_notifications_created_at on notifications(created_at desc);
 
--- Backend uses service_role key which bypasses RLS. Disable RLS on all tables
--- for clean server-side access (no client-side access is allowed).
-alter table parents disable row level security;
-alter table doctors disable row level security;
-alter table children disable row level security;
-alter table vaccinations disable row level security;
-alter table notifications disable row level security;
+-- Step 9: Add indexes for better performance
+CREATE INDEX IF NOT EXISTS idx_parents_aadhaar ON parents(aadhaar);
+CREATE INDEX IF NOT EXISTS idx_parents_phone ON parents(phone);
+CREATE INDEX IF NOT EXISTS idx_parents_access_code ON parents(access_code);
+CREATE INDEX IF NOT EXISTS idx_doctors_phone ON doctors(phone);
+CREATE INDEX IF NOT EXISTS idx_children_mother ON children(mother_aadhaar);
+CREATE INDEX IF NOT EXISTS idx_children_father ON children(father_aadhaar);
+CREATE INDEX IF NOT EXISTS idx_children_child_aadhaar ON children(child_aadhaar);
+CREATE INDEX IF NOT EXISTS idx_vaccinations_child ON vaccinations(child_id);
+CREATE INDEX IF NOT EXISTS idx_vaccination_documents_vaccination ON vaccination_documents(vaccination_id);
+CREATE INDEX IF NOT EXISTS idx_vaccination_documents_child ON vaccination_documents(child_id);
+CREATE INDEX IF NOT EXISTS idx_vaccination_documents_parent ON vaccination_documents(uploaded_by_parent_id);
+CREATE INDEX IF NOT EXISTS idx_device_tokens_parent ON device_tokens(parent_id);
+CREATE INDEX IF NOT EXISTS idx_device_tokens_active ON device_tokens(is_active);
+CREATE INDEX IF NOT EXISTS idx_reminders_child ON vaccination_reminders(child_id);
+CREATE INDEX IF NOT EXISTS idx_reminders_due_date ON vaccination_reminders(due_date);
+CREATE INDEX IF NOT EXISTS idx_notifications_parent ON notifications(parent_id);
+CREATE INDEX IF NOT EXISTS idx_notifications_created_at ON notifications(created_at DESC);
+
+-- Step 10: Disable row-level security
+ALTER TABLE parents DISABLE ROW LEVEL SECURITY;
+ALTER TABLE doctors DISABLE ROW LEVEL SECURITY;
+ALTER TABLE children DISABLE ROW LEVEL SECURITY;
+ALTER TABLE vaccinations DISABLE ROW LEVEL SECURITY;
+ALTER TABLE vaccination_documents DISABLE ROW LEVEL SECURITY;
+ALTER TABLE device_tokens DISABLE ROW LEVEL SECURITY;
+ALTER TABLE vaccination_reminders DISABLE ROW LEVEL SECURITY;
+ALTER TABLE notifications DISABLE ROW LEVEL SECURITY;

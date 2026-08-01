@@ -1,0 +1,15 @@
+{
+  "short_name": "Vardaan+",
+  "name": "Vardaan+ Vaccination Tracker",
+  "icons": [
+    {
+      "src": "logo-light.png",
+      "sizes": "192x192 512x512",
+      "type": "image/png"
+    }
+  ],
+  "start_url": "/",
+  "display": "standalone",
+  "theme_color": "#ffffff",
+  "background_color": "#ffffff"
+}

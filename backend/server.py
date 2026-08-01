@@ -1,20 +1,29 @@
 """Vardaan+ backend - Supabase Postgres via REST API (PostgREST)."""
-from fastapi import FastAPI, APIRouter, HTTPException, Depends, Header
+from fastapi import FastAPI, APIRouter, HTTPException, Depends, Header, UploadFile, File
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
+from starlette.responses import FileResponse
+from starlette.staticfiles import StaticFiles
 import os
 import logging
 import uuid
+import random
 import bcrypt
 import jwt
 import httpx
 from pathlib import Path
 from pydantic import BaseModel
 from typing import List, Optional, Any
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timezone, timedelta, date
+from dateutil.relativedelta import relativedelta
+import json
 
 ROOT_DIR = Path(__file__).parent
-load_dotenv(ROOT_DIR / '.env')
+ENV_PATH = ROOT_DIR / '.env'
+if ENV_PATH.is_file():
+    load_dotenv(ENV_PATH)
+else:
+    load_dotenv(ENV_PATH / 'backend' / '.env')
 
 SUPABASE_URL = os.environ['SUPABASE_URL'].rstrip('/')
 SUPABASE_KEY = os.environ['SUPABASE_SERVICE_ROLE_KEY']
@@ -23,6 +32,11 @@ REST_BASE = f"{SUPABASE_URL}/rest/v1"
 JWT_SECRET = os.environ.get('JWT_SECRET', 'vardaan-dev-secret-change-me')
 JWT_ALGO = 'HS256'
 JWT_TTL_HOURS = 24 * 30
+
+# Firebase Cloud Messaging (FCM) Configuration
+FCM_API_KEY = os.environ.get('FIREBASE_API_KEY', '')
+FCM_PROJECT_ID = os.environ.get('FIREBASE_PROJECT_ID', '')
+FCM_ENABLED = FCM_API_KEY and FCM_PROJECT_ID
 
 _headers = {
     "apikey": SUPABASE_KEY,
@@ -152,6 +166,10 @@ class VaccinationRecordIn(BaseModel):
     child_id: str
     weight_kg: float
     entries: List[dict]
+    access_code: Optional[str] = None
+
+class DoctorAccessCodeIn(BaseModel):
+    access_code: str
 
 class ParentUpdateIn(BaseModel):
     full_name: Optional[str] = None
@@ -176,13 +194,292 @@ class ChildUpdateIn(BaseModel):
 class ConfirmDeleteIn(BaseModel):
     confirm_phrase: str
 
-# ------------- Validation -------------
+class DeviceTokenIn(BaseModel):
+    fcm_token: str
+    device_name: Optional[str] = None
+    device_type: Optional[str] = None  # 'ios' or 'android'
+
+class VaccinationDocumentUploadIn(BaseModel):
+    vaccination_id: str
+    document_type: Optional[str] = None  # 'certificate', 'receipt', 'photo', 'other'
+
+async def send_push_notification(parent_id: str, title: str, body: str, data: Optional[dict] = None) -> bool:
+    """
+    Send a push notification to all registered devices for a parent via Firebase Cloud Messaging.
+    Returns True if sent successfully, False otherwise.
+    """
+    if not FCM_ENABLED:
+        logger.warning("FCM not configured. Push notification not sent.")
+        return False
+    
+    try:
+        # Get all active device tokens for this parent
+        device_tokens = await sb_select('device_tokens', f"select=fcm_token&{eq('parent_id', parent_id)}&is_active=eq.true")
+        
+        if not device_tokens:
+            logger.info(f"No active device tokens found for parent {parent_id}")
+            return False
+        
+        fcm_tokens = [dt['fcm_token'] for dt in device_tokens]
+        
+        # Prepare FCM message
+        fcm_message = {
+            "message": {
+                "notification": {
+                    "title": title,
+                    "body": body,
+                },
+                "data": data or {},
+                "android": {
+                    "priority": "high",
+                    "notification": {
+                        "sound": "default",
+                        "channel_id": "vaccination_reminders",
+                    }
+                },
+                "apns": {
+                    "payload": {
+                        "aps": {
+                            "alert": {
+                                "title": title,
+                                "body": body,
+                            },
+                            "sound": "default",
+                            "badge": 1,
+                        }
+                    }
+                }
+            }
+        }
+        
+        # Send to all tokens (FCM batch send)
+        fcm_base_url = f"https://fcm.googleapis.com/v1/projects/{FCM_PROJECT_ID}/messages:send"
+        
+        # Get access token for Firebase
+        # Note: In production, use Service Account JSON file
+        # For now, use the API key (simpler but less secure)
+        
+        success_count = 0
+        for token in fcm_tokens:
+            fcm_message_with_token = {
+                "message": {
+                    **fcm_message["message"],
+                    "token": token,
+                }
+            }
+            
+            try:
+                r = await http.post(
+                    fcm_base_url,
+                    json=fcm_message_with_token,
+                    headers={"Authorization": f"Bearer {FCM_API_KEY}"},
+                )
+                if r.status_code == 200:
+                    success_count += 1
+                else:
+                    logger.warning(f"FCM send failed for token {token[:20]}...: {r.status_code}")
+            except Exception as e:
+                logger.error(f"Error sending FCM to token {token[:20]}...: {e}")
+        
+        logger.info(f"Sent push notification to {success_count}/{len(fcm_tokens)} devices for parent {parent_id}")
+        return success_count > 0
+        
+    except Exception as e:
+        logger.error(f"Error in send_push_notification: {e}")
+        return False
+
+# ------------- UIP Vaccination Schedule (India) -------------
+# Schedule defines vaccines and their due dates (months after birth)
+UIP_SCHEDULE = {
+    "BCG": [0],  # At birth
+    "OPV": [0, 6, 10, 14, 18, 24, 36],  # Multiple doses
+    "PCV": [6, 10, 16],  # Pneumococcal conjugate vaccine
+    "Rotavirus": [0, 4, 8],  # Rotavirus vaccine
+    "IPV": [14, 18, 24],  # Inactivated polio vaccine
+    "Pentavalent": [6, 10, 14, 18],  # Diphtheria, tetanus, pertussis, hepatitis B, Hib
+    "Hepatitis B": [0, 6],  # Hepatitis B vaccine
+    "Typhoid": [9],  # Typhoid vaccine
+    "Measles": [9, 18],  # Measles vaccine
+    "DPT": [18, 24, 36],  # Diphtheria, pertussis, tetanus booster
+    "Varicella": [12],  # Chickenpox vaccine
+    "JE": [9, 16],  # Japanese Encephalitis
+    "MMR": [18],  # Measles, Mumps, Rubella
+}
+
+def get_vaccine_due_dates(child_dob: str) -> List[dict]:
+    """
+    Calculate vaccine due dates based on child's date of birth.
+    Returns list of due vaccines with their expected dates.
+    """
+    try:
+        dob = datetime.strptime(child_dob, "%Y-%m-%d").date()
+    except:
+        return []
+    
+    due_vaccines = []
+    today = date.today()
+    
+    for vaccine_name, months_list in UIP_SCHEDULE.items():
+        for i, months in enumerate(months_list):
+            dose_num = i + 1
+            # Calculate due date (add months to DOB)
+            try:
+                due_date = dob + relativedelta(months=months)
+                dose_label = f"Dose {dose_num}" if len(months_list) > 1 else "Single dose"
+                
+                due_vaccines.append({
+                    'vaccine_name': vaccine_name,
+                    'vaccine_code': vaccine_name.lower().replace(' ', '_'),
+                    'dose': dose_label,
+                    'due_date': due_date,
+                    'months_after_birth': months,
+                    'is_overdue': due_date < today,
+                })
+            except:
+                pass
+    
+    return due_vaccines
+
+async def check_and_create_vaccination_reminders():
+    """
+    Background job to check for upcoming vaccines and create reminder notifications.
+    Should be called periodically (e.g., daily via cron or APScheduler).
+    """
+    today = date.today()
+    tomorrow = today + timedelta(days=1)
+    
+    # Get all children
+    all_children = await sb_select('children', 'select=id,dob,mother_aadhaar,father_aadhaar')
+    
+    reminder_count = 0
+    
+    for child in all_children:
+        child_id = child['id']
+        dob = child.get('dob')
+        if not dob:
+            continue
+        
+        # Get expected vaccines for this child
+        expected_vaccines = get_vaccine_due_dates(dob)
+        
+        # Get already recorded vaccinations
+        recorded_vacs = await sb_select('vaccinations', f"select=vaccine_code,dose,date_given&{eq('child_id', child_id)}")
+        recorded_set = set((v['vaccine_code'], v['dose']) for v in recorded_vacs)
+        
+        # Get already sent reminders for this child
+        existing_reminders = await sb_select('vaccination_reminders', f"select=vaccine_code,dose,reminder_days_before&{eq('child_id', child_id)}")
+        reminder_set = set((r['vaccine_code'], r['dose'], r['reminder_days_before']) for r in existing_reminders)
+        
+        for vaccine in expected_vaccines:
+            vac_code = vaccine['vaccine_code']
+            dose = vaccine['dose']
+            due_date = vaccine['due_date']
+            
+            # Skip if already recorded
+            if (vac_code, dose) in recorded_set:
+                continue
+            
+            # Check if reminder should be created (15 days or 7 days before due date)
+            for days_before in [15, 7]:
+                reminder_date = due_date - timedelta(days=days_before)
+                
+                # Check if today is the reminder day
+                if today <= reminder_date <= tomorrow:
+                    # Skip if reminder already exists
+                    if (vac_code, dose, days_before) in reminder_set:
+                        continue
+                    
+                    # Get parent aadhaars
+                    parent_aadhaars = [a for a in (child.get('mother_aadhaar'), child.get('father_aadhaar')) if a]
+                    
+                    for aad in parent_aadhaars:
+                        parent = await sb_find_one('parents', eq('aadhaar', aad))
+                        if not parent:
+                            continue
+                        
+                        # Create notification
+                        if days_before == 15:
+                            title = f"{vaccine['vaccine_name']} due soon"
+                            body = f"{vaccine['vaccine_name']} ({dose}) is due for {child['name']} in {days_before} days (on {due_date.strftime('%B %d, %Y')}). Schedule an appointment with your doctor."
+                        else:  # 7 days
+                            title = f"{vaccine['vaccine_name']} due very soon!"
+                            body = f"{vaccine['vaccine_name']} ({dose}) is due for {child['name']} in {days_before} days (on {due_date.strftime('%B %d, %Y')}). Please schedule an appointment immediately."
+                        
+                        notification_data = {
+                            'id': str(uuid.uuid4()),
+                            'parent_id': parent['id'],
+                            'title': title,
+                            'body': body,
+                            'child_id': child_id,
+                            'vaccination_id': None,
+                            'read': False,
+                            'created_at': now_iso(),
+                        }
+                        
+                        notif = await sb_insert('notifications', notification_data)
+                        
+                        # Send push notification to device
+                        await send_push_notification(
+                            parent['id'],
+                            title=title,
+                            body=body,
+                            data={
+                                'type': 'vaccination_reminder',
+                                'child_id': child_id,
+                                'vaccine_name': vaccine['vaccine_name'],
+                                'days_until_due': str(days_before),
+                            }
+                        )
+                        
+                        # Track this reminder
+                        reminder_data = {
+                            'id': str(uuid.uuid4()),
+                            'child_id': child_id,
+                            'vaccine_code': vac_code,
+                            'vaccine_name': vaccine['vaccine_name'],
+                            'dose': dose,
+                            'due_date': str(due_date),
+                            'reminder_days_before': days_before,
+                            'notification_id': notif['id'],
+                            'created_at': now_iso(),
+                        }
+                        
+                        await sb_insert('vaccination_reminders', reminder_data)
+                        reminder_count += 1
+    
+    return {'reminders_created': reminder_count}
 
 def valid_aadhaar(a: str) -> bool:
     return isinstance(a, str) and a.isdigit() and len(a) == 12
 
 def valid_phone(p: str) -> bool:
     return isinstance(p, str) and p.isdigit() and 7 <= len(p) <= 15
+
+def generate_access_code() -> str:
+    return f"{random.randint(100000, 999999):06d}"
+
+def is_valid_access_code(code: str) -> bool:
+    return isinstance(code, str) and code.isdigit() and len(code) == 6
+
+def verify_access_code(child: dict, access_code: str) -> bool:
+    if not is_valid_access_code(access_code):
+        return False
+    return bool(child.get('mother_access_code') == access_code or child.get('father_access_code') == access_code)
+
+async def generate_unique_access_code() -> str:
+    for _ in range(20):
+        code = generate_access_code()
+        if not await sb_find_one('parents', eq('access_code', code)):
+            return code
+    raise HTTPException(500, "Unable to generate a unique access code")
+
+async def ensure_parent_access_code(parent: dict) -> dict:
+    if parent.get('access_code') and is_valid_access_code(parent['access_code']):
+        return parent
+    code = await generate_unique_access_code()
+    await sb_update('parents', eq('id', parent['id']), {'access_code': code})
+    parent['access_code'] = code
+    return parent
 
 # ------------- Auth: Parent -------------
 
@@ -198,12 +495,14 @@ async def parent_register(body: ParentRegisterIn):
         raise HTTPException(409, "Aadhaar already registered")
     if await sb_find_one('parents', eq('phone', body.phone)):
         raise HTTPException(409, "Phone already registered")
+    access_code = await generate_unique_access_code()
     doc = {
         'id': str(uuid.uuid4()),
         'full_name': body.full_name.strip(),
         'aadhaar': body.aadhaar,
         'phone': body.phone,
         'password_hash': hash_password(body.password),
+        'access_code': access_code,
         'created_at': now_iso(),
     }
     p = await sb_insert('parents', doc)
@@ -215,6 +514,7 @@ async def parent_login(body: ParentLoginIn):
     p = await sb_find_one('parents', eq('aadhaar', body.aadhaar))
     if not p or not verify_password(body.password, p['password_hash']):
         raise HTTPException(401, "Invalid Aadhaar or password")
+    p = await ensure_parent_access_code(p)
     token = make_token(p['id'], 'parent')
     return {'token': token, 'parent': strip_secret(p)}
 
@@ -223,6 +523,7 @@ async def parent_me(cur=Depends(require_parent)):
     p = await sb_find_one('parents', eq('id', cur['user_id']))
     if not p:
         raise HTTPException(404, "Parent not found")
+    p = await ensure_parent_access_code(p)
     return strip_secret(p)
 
 # ------------- Auth: Doctor -------------
@@ -350,6 +651,12 @@ async def parent_delete(body: ConfirmDeleteIn, cur=Depends(require_parent)):
 
 async def _child_public(child: dict) -> dict:
     vacs = await sb_select('vaccinations', f"select=*&{eq('child_id', child['id'])}")
+    
+    # Get documents for each vaccination
+    for vac in vacs:
+        docs = await sb_select('vaccination_documents', f"select=id,document_url,document_type,file_name,uploaded_at&{eq('vaccination_id', vac['id'])}")
+        vac['documents'] = docs
+    
     return {**child, 'vaccinations': vacs}
 
 @api.post('/parent/children')
@@ -465,12 +772,36 @@ async def doctor_search(aadhaar: str, cur=Depends(require_doctor)):
         raise HTTPException(400, "Aadhaar must be 12 digits")
     parent = await sb_find_one('parents', eq('aadhaar', aadhaar))
     if parent:
+        p = await ensure_parent_access_code(parent)
         kids = await sb_select('children', f"select=*&or=(mother_aadhaar.eq.{aadhaar},father_aadhaar.eq.{aadhaar})")
-        return {'match_type': 'parent', 'parent': strip_secret(parent), 'children': kids}
+        return {'match_type': 'parent', 'parent': strip_secret(p), 'children': kids}
     child = await sb_find_one('children', eq('child_aadhaar', aadhaar))
     if child:
         return {'match_type': 'child', 'children': [child]}
     raise HTTPException(404, "No records found for this Aadhaar")
+
+@api.post('/doctor/children/{child_id}/verify-access-code')
+async def verify_child_access_code(child_id: str, body: DoctorAccessCodeIn, cur=Depends(require_doctor)):
+    child = await sb_find_one('children', eq('id', child_id))
+    if not child:
+        raise HTTPException(404, "Child not found")
+
+    verification_child = {'mother_access_code': None, 'father_access_code': None}
+    for aadhaar in (child.get('mother_aadhaar'), child.get('father_aadhaar')):
+        if not aadhaar:
+            continue
+        parent = await sb_find_one('parents', eq('aadhaar', aadhaar))
+        if not parent:
+            continue
+        p = await ensure_parent_access_code(parent)
+        if aadhaar == child.get('mother_aadhaar'):
+            verification_child['mother_access_code'] = p.get('access_code')
+        if aadhaar == child.get('father_aadhaar'):
+            verification_child['father_access_code'] = p.get('access_code')
+
+    if verify_access_code(verification_child, body.access_code):
+        return {'ok': True}
+    raise HTTPException(403, "Invalid access code for this child")
 
 # ------------- Vaccinations -------------
 
@@ -484,6 +815,22 @@ async def record_vaccinations(body: VaccinationRecordIn, cur=Depends(require_doc
         raise HTTPException(400, "No vaccines selected")
     if body.weight_kg is None or body.weight_kg <= 0 or body.weight_kg > 200:
         raise HTTPException(400, "Enter the child's current weight in kg")
+
+    verification_child = {'mother_access_code': None, 'father_access_code': None}
+    for aadhaar in (child.get('mother_aadhaar'), child.get('father_aadhaar')):
+        if not aadhaar:
+            continue
+        parent = await sb_find_one('parents', eq('aadhaar', aadhaar))
+        if not parent:
+            continue
+        p = await ensure_parent_access_code(parent)
+        if aadhaar == child.get('mother_aadhaar'):
+            verification_child['mother_access_code'] = p.get('access_code')
+        if aadhaar == child.get('father_aadhaar'):
+            verification_child['father_access_code'] = p.get('access_code')
+    if not body.access_code or not verify_access_code(verification_child, body.access_code):
+        raise HTTPException(403, "A valid parent access code is required to record vaccinations")
+
     weight = round(float(body.weight_kg), 2)
 
     created = []
@@ -528,6 +875,234 @@ async def record_vaccinations(body: VaccinationRecordIn, cur=Depends(require_doc
 
     return {'created': created}
 
+@api.post('/admin/check-vaccination-reminders')
+async def trigger_vaccination_reminders():
+    """
+    Trigger vaccination reminder check. 
+    In production, this should be called by a scheduled cron job daily.
+    """
+    result = await check_and_create_vaccination_reminders()
+    return result
+
+# ------------- Vaccination Documents (Image Upload) -------------
+
+@api.post('/parent/vaccinations/{vaccination_id}/upload-document')
+async def upload_vaccination_document(
+    vaccination_id: str,
+    document_type: Optional[str] = "photo",
+    file: UploadFile = File(...),
+    cur=Depends(require_parent)
+):
+    """
+    Upload a vaccination document/proof image.
+    Only parent who owns the child can upload.
+    """
+    # Validate vaccination exists and parent owns it
+    vac = await sb_find_one('vaccinations', eq('id', vaccination_id))
+    if not vac:
+        raise HTTPException(404, "Vaccination not found")
+    
+    child = await sb_find_one('children', eq('id', vac['child_id']))
+    if not child:
+        raise HTTPException(404, "Child not found")
+    
+    parent = await sb_find_one('parents', eq('id', cur['user_id']))
+    if parent['aadhaar'] not in (child.get('mother_aadhaar'), child.get('father_aadhaar')):
+        raise HTTPException(403, "Not your child")
+    
+    # Validate file
+    if not file:
+        raise HTTPException(400, "No file provided")
+    
+    if not file.content_type or not file.content_type.startswith('image/'):
+        raise HTTPException(400, "File must be an image (JPEG, PNG, WebP, etc)")
+    
+    # Validate file size (max 5MB)
+    contents = await file.read()
+    file_size = len(contents)
+    if file_size > 5 * 1024 * 1024:  # 5MB
+        raise HTTPException(400, "File size must be less than 5MB")
+    
+    # Create a unique filename
+    import base64
+    file_extension = file.filename.split('.')[-1].lower() if file.filename else 'jpg'
+    safe_extension = file_extension if file_extension in ['jpg', 'jpeg', 'png', 'webp', 'gif'] else 'jpg'
+    
+    doc_id = str(uuid.uuid4())
+    filename = f"vaccination_{vaccination_id}_{doc_id}.{safe_extension}"
+    
+    # In production, upload to Supabase Storage or S3
+    # For now, we'll store as base64 in database or use Supabase Storage
+    # Using Supabase Storage bucket approach:
+    
+    try:
+        # Upload to Supabase Storage
+        bucket_url = f"{SUPABASE_URL}/storage/v1/object/public/vaccination-documents/{filename}"
+        
+        upload_headers = {
+            "Authorization": f"Bearer {SUPABASE_KEY}",
+            "Content-Type": file.content_type,
+        }
+        
+        r = await http.post(
+            f"{SUPABASE_URL}/storage/v1/object/vaccination-documents/{filename}",
+            content=contents,
+            headers=upload_headers,
+        )
+        
+        if r.status_code >= 400:
+            logger.error(f"Storage upload failed: {r.status_code} - {r.text}")
+            raise HTTPException(500, "Failed to upload file")
+        
+        document_url = bucket_url
+        
+    except Exception as e:
+        logger.error(f"Error uploading file: {e}")
+        raise HTTPException(500, "Failed to upload file")
+    
+    # Save document record to database
+    doc_record = {
+        'id': doc_id,
+        'vaccination_id': vaccination_id,
+        'child_id': vac['child_id'],
+        'uploaded_by_parent_id': cur['user_id'],
+        'document_url': document_url,
+        'document_type': document_type or 'photo',
+        'file_name': file.filename,
+        'file_size_bytes': file_size,
+        'mime_type': file.content_type,
+        'uploaded_at': now_iso(),
+    }
+    
+    await sb_insert('vaccination_documents', doc_record)
+    
+    return {
+        'id': doc_id,
+        'document_url': document_url,
+        'message': 'Document uploaded successfully',
+    }
+
+@api.get('/vaccinations/{vaccination_id}/documents')
+async def get_vaccination_documents(vaccination_id: str, cur=Depends(get_current)):
+    """
+    Get all documents for a vaccination.
+    Accessible by parent (who owns child) or doctor.
+    """
+    vac = await sb_find_one('vaccinations', eq('id', vaccination_id))
+    if not vac:
+        raise HTTPException(404, "Vaccination not found")
+    
+    child = await sb_find_one('children', eq('id', vac['child_id']))
+    if not child:
+        raise HTTPException(404, "Child not found")
+    
+    # Check access rights
+    if cur['role'] == 'parent':
+        parent = await sb_find_one('parents', eq('id', cur['user_id']))
+        if parent['aadhaar'] not in (child.get('mother_aadhaar'), child.get('father_aadhaar')):
+            raise HTTPException(403, "Not your child")
+    
+    # Doctor can view any vaccination document
+    documents = await sb_select('vaccination_documents', f"select=*&{eq('vaccination_id', vaccination_id)}&order=uploaded_at.desc")
+    
+    return documents
+
+@api.delete('/vaccination-documents/{doc_id}')
+async def delete_vaccination_document(doc_id: str, cur=Depends(require_parent)):
+    """
+    Delete a vaccination document.
+    Only the parent who uploaded it can delete.
+    """
+    doc = await sb_find_one('vaccination_documents', eq('id', doc_id))
+    if not doc:
+        raise HTTPException(404, "Document not found")
+    
+    # Check if parent is the one who uploaded
+    if doc['uploaded_by_parent_id'] != cur['user_id']:
+        raise HTTPException(403, "You can only delete your own documents")
+    
+    try:
+        # Delete from Supabase Storage
+        # Extract filename from URL
+        filename = doc['document_url'].split('/')[-1]
+        
+        delete_headers = {
+            "Authorization": f"Bearer {SUPABASE_KEY}",
+        }
+        
+        await http.delete(
+            f"{SUPABASE_URL}/storage/v1/object/vaccination-documents/{filename}",
+            headers=delete_headers,
+        )
+    except Exception as e:
+        logger.warning(f"Could not delete file from storage: {e}")
+    
+    # Delete from database
+    await sb_delete('vaccination_documents', eq('id', doc_id))
+    
+    return {'ok': True}
+
+# ------------- Device Tokens (Push Notifications) -------------
+
+@api.post('/parent/device-token')
+async def register_device_token(body: DeviceTokenIn, cur=Depends(require_parent)):
+    """
+    Register a device token for push notifications.
+    Called by mobile app on startup.
+    """
+    parent = await sb_find_one('parents', eq('id', cur['user_id']))
+    if not parent:
+        raise HTTPException(404, "Parent not found")
+    
+    if not body.fcm_token or len(body.fcm_token) < 10:
+        raise HTTPException(400, "Invalid FCM token")
+    
+    # Check if token already exists
+    existing = await sb_find_one('device_tokens', eq('fcm_token', body.fcm_token))
+    if existing:
+        # Update last_used timestamp
+        await sb_update('device_tokens', eq('fcm_token', body.fcm_token), {
+            'last_used': now_iso(),
+            'is_active': True,
+        })
+        return {'status': 'updated', 'message': 'Device token updated'}
+    
+    # Create new device token entry
+    doc = {
+        'id': str(uuid.uuid4()),
+        'parent_id': cur['user_id'],
+        'fcm_token': body.fcm_token,
+        'device_name': body.device_name or 'Unknown Device',
+        'device_type': body.device_type or 'android',
+        'is_active': True,
+        'last_used': now_iso(),
+        'created_at': now_iso(),
+    }
+    await sb_insert('device_tokens', doc)
+    return {'status': 'registered', 'message': 'Device token registered successfully'}
+
+@api.post('/parent/device-token/unregister')
+async def unregister_device_token(body: DeviceTokenIn, cur=Depends(require_parent)):
+    """
+    Unregister a device token (e.g., on logout).
+    """
+    if not body.fcm_token:
+        raise HTTPException(400, "FCM token required")
+    
+    # Mark as inactive instead of deleting
+    await sb_update('device_tokens', f"{eq('fcm_token', body.fcm_token)}&{eq('parent_id', cur['user_id'])}", {
+        'is_active': False,
+    })
+    return {'status': 'unregistered', 'message': 'Device token unregistered'}
+
+@api.get('/parent/device-tokens')
+async def list_device_tokens(cur=Depends(require_parent)):
+    """
+    List all registered device tokens for the parent.
+    """
+    tokens = await sb_select('device_tokens', f"select=id,device_name,device_type,is_active,last_used,created_at&{eq('parent_id', cur['user_id'])}&order=last_used.desc")
+    return tokens
+
 # ------------- Notifications -------------
 
 @api.get('/parent/notifications')
@@ -559,3 +1134,18 @@ logger = logging.getLogger(__name__)
 @app.on_event("shutdown")
 async def shutdown_client():
     await http.aclose()
+
+FRONTEND_BUILD_DIR = ROOT_DIR.parent / "frontend" / "build"
+if FRONTEND_BUILD_DIR.exists():
+    app.mount(
+        "/static",
+        StaticFiles(directory=FRONTEND_BUILD_DIR / "static"),
+        name="static",
+    )
+
+    @app.get("/{full_path:path}", include_in_schema=False)
+    async def serve_frontend(full_path: str):
+        requested = FRONTEND_BUILD_DIR / full_path
+        if full_path and requested.is_file():
+            return FileResponse(requested)
+        return FileResponse(FRONTEND_BUILD_DIR / "index.html")

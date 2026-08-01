@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { api, setSession } from "@/lib/api";
+import { requestFCMToken, getDeviceInfo, isFirebaseConfigured } from "@/lib/firebase";
 import { Loader2, ArrowLeft } from "lucide-react";
 import ThemeToggle from "@/components/ThemeToggle";
 
@@ -32,7 +33,27 @@ export default function ParentRegister() {
         password: form.password,
       });
       setSession({ token: data.token, role: "parent", user: data.parent });
-      toast.success("Account created");
+      
+      // Register for push notifications
+      if (isFirebaseConfigured()) {
+        try {
+          const fcmToken = await requestFCMToken();
+          if (fcmToken) {
+            const deviceInfo = getDeviceInfo();
+            await api.post("/parent/device-token", {
+              fcm_token: fcmToken,
+              device_name: deviceInfo.deviceName,
+              device_type: deviceInfo.deviceType,
+            });
+            console.log("Device registered for push notifications");
+          }
+        } catch (error) {
+          console.warn("Could not register for push notifications:", error);
+          // Don't fail registration if push notification registration fails
+        }
+      }
+      
+      toast.success(`Account created. Share this access code with doctors: ${data.parent.access_code}`);
       nav("/parent/dashboard", { replace: true });
     } catch (err) {
       toast.error(err?.response?.data?.detail || "Registration failed");

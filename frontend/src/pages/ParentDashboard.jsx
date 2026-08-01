@@ -15,7 +15,7 @@ export default function ParentDashboard() {
   const [unread, setUnread] = useState(0);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
+  useEffect(() => { 
     if (!session || session.role !== "parent") {
       nav("/parent/login", { replace: true });
       return;
@@ -33,7 +33,7 @@ export default function ParentDashboard() {
       }
     })();
      
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const firstName = session?.user?.full_name?.split(" ")[0] || "there";
 
@@ -53,6 +53,20 @@ export default function ParentDashboard() {
           <Plus className="w-4 h-4" /> Add Child
         </Button>
       </div>
+
+      {session?.user?.access_code && (
+        <div className="card-soft p-4 mb-6 border-sky-200 dark:border-sky-900/60">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div>
+              <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">Your access code</p>
+              <p className="text-sm text-slate-500 dark:text-slate-400">Share this six-digit code with doctors when they need to update your child’s vaccine record.</p>
+            </div>
+            <div className="rounded-2xl bg-sky-50 dark:bg-sky-900/40 px-4 py-3 text-2xl font-semibold tracking-[0.3em] text-sky-700 dark:text-sky-300">
+              {session.user.access_code}
+            </div>
+          </div>
+        </div>
+      )}
 
       <section>
         <h2 className="text-lg font-display tracking-tight text-slate-800 dark:text-slate-200 mb-4">My Children</h2>

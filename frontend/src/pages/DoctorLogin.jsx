@@ -30,47 +30,165 @@ export default function DoctorLogin() {
   };
 
   return (
-    <div className="min-h-screen aurora-bg grid md:grid-cols-2">
-      <ThemeToggle floating />
-      <div className="hidden md:flex flex-col justify-between p-10 bg-sky-700 text-white relative overflow-hidden">
-        <div>
-          <div className="w-11 h-11 rounded-2xl bg-white/15 grid place-items-center">
-            <Stethoscope className="w-6 h-6" strokeWidth={1.75} />
-          </div>
-          <h2 className="mt-8 text-4xl font-display tracking-tight max-w-sm">Record vaccinations in seconds, not minutes.</h2>
-          <p className="mt-4 text-sky-100 max-w-sm">Search by Aadhaar. See what's due. Tap to record. Every parent gets an instant notification.</p>
+    <>
+      {/* Mobile layout */}
+      <div className="min-h-screen aurora-bg md:hidden">
+        <ThemeToggle floating />
+        <div className="flex items-center justify-center p-6 min-h-screen">
+          <form onSubmit={submit} className="w-full max-w-md card-soft p-8">
+            <Link to="/select-role" data-testid="back-to-roles" className="inline-flex items-center gap-2 text-sm text-slate-500 hover:text-slate-700 dark:hover:text-slate-200 dark:text-slate-300 mb-6">
+              <ArrowLeft className="w-4 h-4" /> Back to role selection
+            </Link>
+            <h1 className="text-3xl font-display tracking-tight text-slate-900 dark:text-slate-100">Doctor Login</h1>
+            <p className="mt-2 text-slate-500 dark:text-slate-400 text-sm">Sign in to access patient records.</p>
+            <div className="mt-8 space-y-5">
+              <div>
+                <Label className="text-slate-700 dark:text-slate-300">Phone number</Label>
+                <Input
+                  data-testid="doc-login-phone"
+                  inputMode="numeric"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value.replace(/\D/g, "").slice(0, 15))}
+                  placeholder="Registered phone"
+                  className="mt-2 h-12 rounded-xl"
+                />
+              </div>
+              <div>
+                <Label className="text-slate-700 dark:text-slate-300">Password</Label>
+                <Input
+                  data-testid="doc-login-password"
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="Enter password"
+                  className="mt-2 h-12 rounded-xl"
+                />
+              </div>
+            </div>
+            <Button
+              data-testid="doc-login-submit"
+              type="submit"
+              disabled={loading}
+              className="mt-8 w-full h-12 rounded-full bg-sky-700 hover:bg-sky-800 text-white"
+            >
+              {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Sign in"}
+            </Button>
+            <div className="mt-6 flex items-center justify-between text-sm">
+              <Link data-testid="doc-register-link" to="/doctor/register" className="text-sky-700 dark:text-sky-300 font-medium hover:underline">Create doctor account</Link>
+              <Link to="/select-role" className="text-slate-500 hover:text-slate-700 dark:hover:text-slate-200 dark:text-slate-300">Switch role</Link>
+            </div>
+          </form>
         </div>
-        <div className="text-sky-100 text-sm">© Vardaan+ 2026</div>
-        <div className="absolute -bottom-24 -right-24 w-96 h-96 rounded-full bg-sky-400/30 blur-3xl" />
       </div>
-      <div className="flex items-center justify-center p-6">
-        <form onSubmit={submit} className="w-full max-w-md card-soft p-8">
-          <Link to="/select-role" data-testid="back-to-roles" className="inline-flex items-center gap-2 text-sm text-slate-500 hover:text-slate-700 dark:hover:text-slate-200 dark:text-slate-300 mb-6">
-            <ArrowLeft className="w-4 h-4" /> Back to role selection
-          </Link>
-          <h1 className="text-3xl font-display tracking-tight text-slate-900 dark:text-slate-100">Doctor Login</h1>
-          <p className="mt-2 text-slate-500 dark:text-slate-400 text-sm">Sign in to access patient records.</p>
-          <div className="mt-8 space-y-5">
-            <div>
-              <Label>Phone number</Label>
-              <Input data-testid="doc-login-phone" inputMode="numeric" value={phone}
-                onChange={(e) => setPhone(e.target.value.replace(/\D/g, "").slice(0, 15))}
-                placeholder="Registered phone" className="mt-2 h-12 rounded-xl" />
+
+      {/* Desktop layout */}
+      <div className="hidden md:flex min-h-screen items-center justify-center" style={{ background: '#080d19' }}>
+        <ThemeToggle floating />
+        <div className="flex w-[calc(100vw-80px)] max-w-[1100px] rounded-[2rem] overflow-hidden shadow-2xl" style={{ background: '#0f1620', height: 'calc(100vh - 140px)', maxHeight: '620px' }}>
+
+          {/* Left panel — navy-blue gradient */}
+          <div
+            className="flex flex-col p-10 lg:p-12 relative overflow-hidden"
+            style={{
+              background: 'linear-gradient(135deg, #1a3a6b 0%, #162d5e 50%, #0e2147 100%)',
+              width: '46%',
+              borderRadius: '1.5rem',
+            }}
+          >
+            {/* Decorative blurred circles */}
+            <div className="absolute top-[-60px] right-[-60px] w-64 h-64 rounded-full opacity-20" style={{ background: '#3b82f6', filter: 'blur(60px)' }} />
+            <div className="absolute bottom-[-40px] left-[-40px] w-48 h-48 rounded-full opacity-15" style={{ background: '#60a5fa', filter: 'blur(50px)' }} />
+
+            {/* Floating decorative plus/cross icons like in the image */}
+            <div className="absolute inset-0 overflow-hidden pointer-events-none select-none" style={{ color: '#ffffff18' }}>
+              <span className="absolute text-2xl" style={{ top: '38%', left: '12%' }}>+</span>
+              <span className="absolute text-lg" style={{ top: '55%', right: '14%' }}>+</span>
+              <span className="absolute text-xl" style={{ top: '22%', right: '20%' }}>+</span>
+              <svg className="absolute" style={{ top: '48%', left: '60%', width: 18, height: 18, opacity: 0.25 }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+              <svg className="absolute" style={{ top: '28%', left: '48%', width: 16, height: 16, opacity: 0.2 }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/></svg>
             </div>
-            <div>
-              <Label>Password</Label>
-              <Input data-testid="doc-login-password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Enter password" className="mt-2 h-12 rounded-xl" />
+
+            <div className="relative z-10 flex flex-col h-full">
+              {/* Icon */}
+              <div className="w-11 h-11 rounded-2xl grid place-items-center" style={{ background: 'rgba(255,255,255,0.12)' }}>
+                <Stethoscope className="w-6 h-6 text-white" strokeWidth={1.75} />
+              </div>
+
+              {/* Headline */}
+              <h2 className="mt-6 text-[2.25rem] font-display font-semibold tracking-tight leading-[1.15]" style={{ color: '#fff' }}>
+                A lifelong vaccination record — always in your pocket.
+              </h2>
+              <p className="mt-4 text-sm leading-relaxed max-w-[300px]" style={{ color: '#93c5fd' }}>
+                Search by Aadhaar. See what's due. Tap to record. Every parent gets an instant notification.
+              </p>
+              <div className="mt-2 text-sm" style={{ color: '#60a5fa' }}>© Vardaan+ 2026</div>
+
+              {/* Doctor illustration */}
+              <div className="flex-1 flex items-end justify-center mt-3">
+                <img
+                  src="/doctor-illustration.png"
+                  alt="Doctor illustration"
+                  className="max-w-[260px] h-auto object-contain drop-shadow-xl rounded-2x1"
+                />
+              </div>
             </div>
           </div>
-          <Button data-testid="doc-login-submit" type="submit" disabled={loading} className="mt-8 w-full h-12 rounded-full bg-sky-700 hover:bg-sky-800 text-white">
-            {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Sign in"}
-          </Button>
-          <div className="mt-6 flex items-center justify-between text-sm">
-            <Link data-testid="doc-register-link" to="/doctor/register" className="text-sky-700 dark:text-sky-300 font-medium hover:underline">Create doctor account</Link>
-            <Link to="/select-role" className="text-slate-500 hover:text-slate-700 dark:hover:text-slate-200 dark:text-slate-300">Switch role</Link>
+
+          {/* Right form panel */}
+          <div className="flex-1 flex items-center justify-center px-10 lg:px-16">
+            <form onSubmit={submit} className="w-full max-w-[380px]">
+              <Link to="/select-role" data-testid="back-to-roles" className="inline-flex items-center gap-2 text-sm mb-8 transition-colors" style={{ color: '#94a3b8' }}>
+                <ArrowLeft className="w-4 h-4" /> Back to role selection
+              </Link>
+              <h1 className="text-3xl font-display tracking-tight font-semibold" style={{ color: '#fff' }}>Doctor Login</h1>
+              <p className="mt-2 text-sm" style={{ color: '#64748b' }}>Sign in with your credentials to access patient vaccination records.</p>
+
+              <div className="mt-8 space-y-5">
+                <div>
+                  <Label style={{ color: '#cbd5e1' }}>Phone number</Label>
+                  <Input
+                    data-testid="doc-login-phone"
+                    inputMode="numeric"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value.replace(/\D/g, "").slice(0, 15))}
+                    placeholder="Registered phone"
+                    className="mt-2 h-12 rounded-xl"
+                    style={{ background: '#0a0f1a', borderColor: '#1e293b', color: '#fff' }}
+                  />
+                </div>
+                <div>
+                  <Label style={{ color: '#cbd5e1' }}>Password</Label>
+                  <Input
+                    data-testid="doc-login-password"
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="Enter your password"
+                    className="mt-2 h-12 rounded-xl"
+                    style={{ background: '#0a0f1a', borderColor: '#1e293b', color: '#fff' }}
+                  />
+                </div>
+              </div>
+
+              <Button
+                data-testid="doc-login-submit"
+                type="submit"
+                disabled={loading}
+                className="mt-8 w-full h-12 rounded-full text-white text-base font-medium"
+                style={{ background: '#2563eb' }}
+              >
+                {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Sign in"}
+              </Button>
+
+              <div className="mt-6 flex items-center justify-between text-sm">
+                <Link data-testid="doc-register-link" to="/doctor/register" className="font-medium transition-colors" style={{ color: '#60a5fa' }}>Create doctor account</Link>
+                <Link to="/select-role" className="transition-colors" style={{ color: '#94a3b8' }}>Switch role</Link>
+              </div>
+            </form>
           </div>
-        </form>
+
+        </div>
       </div>
-    </div>
+    </>
   );
 }

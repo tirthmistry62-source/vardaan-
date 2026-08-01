@@ -3,6 +3,8 @@ import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-route
 import { AnimatePresence, motion } from "framer-motion";
 import { Toaster } from "sonner";
 import { getSession } from "@/lib/api";
+import { initializeFirebase, setupForegroundMessageListener } from "@/lib/firebase";
+import { useEffect } from "react";
 
 import Landing from "@/pages/Landing";
 import SelectRole from "@/pages/SelectRole";
@@ -64,6 +66,14 @@ function AnimatedRoutes() {
 }
 
 function App() {
+  // Initialize Firebase on app load
+  useEffect(() => {
+    initializeFirebase();
+  }, []);
+
+  // Check if user has a valid session on app load
+  const session = getSession();
+  
   return (
     <div className="App">
       <BrowserRouter>

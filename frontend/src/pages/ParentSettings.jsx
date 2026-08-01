@@ -85,6 +85,7 @@ export default function ParentSettings() {
           <div>
             <h1 className="text-3xl font-display tracking-tight text-slate-900 dark:text-slate-100">Profile & Settings</h1>
             <p className="text-slate-500 dark:text-slate-400 text-sm">Aadhaar: {maskAadhaar(me.aadhaar)}</p>
+            {me.access_code && <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Access code: <span className="font-semibold text-slate-700 dark:text-slate-200">{me.access_code}</span></p>}
           </div>
         </div>
 

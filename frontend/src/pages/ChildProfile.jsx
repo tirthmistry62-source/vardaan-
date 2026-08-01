@@ -3,10 +3,13 @@ import { Link, useParams } from "react-router-dom";
 import AppShell from "@/components/AppShell";
 import VaccineInfoDialog from "@/components/VaccineInfoDialog";
 import UIPBadge from "@/components/UIPBadge";
+import VaccinationDocumentViewer from "@/components/VaccinationDocumentViewer";
+import VaccinationDocumentUpload from "@/components/VaccinationDocumentUpload";
 import { api } from "@/lib/api";
+import { useVaccinationDocuments } from "@/hooks/useVaccinationDocuments";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Progress } from "@/components/ui/progress";
-import { Pencil, CheckCircle2, Clock, AlertTriangle, CalendarDays, User2, Stethoscope, Info } from "lucide-react";
+import { Pencil, CheckCircle2, Clock, AlertTriangle, CalendarDays, User2, Stethoscope, Info, FileText } from "lucide-react";
 import { computeVaccineStatuses, completionPercent, ageString } from "@/lib/vaccineStatus";
 import { MILESTONES } from "@/lib/vaccineSchedule";
 
@@ -157,35 +160,194 @@ function StatChip({ icon: Icon, label, value, tint }) {
 function VaccineCard({ v, onOpen }) {
   const meta = STATUS_META[v.status];
   const Icon = meta.icon;
+  const MAX_DOCUMENTS = 2;
   const dateLabel = v.record
     ? `Given on ${new Date(v.record.date_given).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}`
     : `Due ${v.dueDate.toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}`;
+
+  // Document viewing/uploading state
+  const [documentsCount, setDocumentsCount] = useState(0);
+  const [documents, setDocuments] = useState([]);
+  const [showDocuments, setShowDocuments] = useState(false);
+  const [showUpload, setShowUpload] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const { uploadDocument, deleteDocument } = useVaccinationDocuments();
+
+  // Load documents for this vaccine
+  useEffect(() => {
+    if (v.record?.id) {
+      (async () => {
+        try {
+          const { data } = await api.get(`/vaccinations/${v.record.id}/documents`);
+          setDocuments(data);
+          setDocumentsCount(data.length);
+        } catch (e) {
+          setDocumentsCount(0);
+        }
+      })();
+    }
+  }, [v.record?.id]);
+
+  const handleViewDocuments = (e) => {
+    e.stopPropagation();
+    
+    // If has documents, show viewer first (user can close and upload more)
+    if (documentsCount > 0) {
+      setShowDocuments(true);
+    } 
+    // If can still upload more, show upload dialog
+    else if (canUploadMore) {
+      setShowUpload(true);
+    }
+  };
+
+  const handleUploadDocument = async (file) => {
+    try {
+      // Check if limit reached
+      if (documentsCount >= MAX_DOCUMENTS) {
+        alert(`You can upload maximum ${MAX_DOCUMENTS} documents per vaccine`);
+        return false;
+      }
+
+      setIsUploading(true);
+      const result = await uploadDocument(v.record.id, file, 'photo');
+      if (result) {
+        // Refresh documents
+        const { data } = await api.get(`/vaccinations/${v.record.id}/documents`);
+        setDocuments(data);
+        setDocumentsCount(data.length);
+        setShowUpload(false);
+        return true;
+      }
+    } catch (err) {
+      console.error('Upload failed:', err);
+    } finally {
+      setIsUploading(false);
+    }
+    return false;
+  };
+
+  const canUploadMore = documentsCount < MAX_DOCUMENTS;
+
+  const handleDeleteDocument = async (docId) => {
+    if (!confirm('Are you sure you want to delete this document?')) {
+      return;
+    }
+    
+    try {
+      setIsDeleting(true);
+      await deleteDocument(docId);
+      
+      // Refresh documents
+      const { data } = await api.get(`/vaccinations/${v.record.id}/documents`);
+      setDocuments(data);
+      setDocumentsCount(data.length);
+      
+      // Auto-close viewer if no more documents
+      if (data.length === 0) {
+        setShowDocuments(false);
+      }
+    } catch (err) {
+      console.error('Delete failed:', err);
+      alert('Failed to delete document. Please try again.');
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   return (
-    <button
-      type="button"
-      data-testid={`vaccine-${v.code}`}
-      onClick={onOpen}
-      className="card-soft hover-lift tap-scale p-4 flex items-start gap-3 text-left w-full cursor-pointer group"
-    >
-      <div className={`w-10 h-10 rounded-xl grid place-items-center ${meta.cls} shrink-0`}>
-        <Icon className="w-5 h-5" strokeWidth={1.75} />
-      </div>
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center justify-between gap-2">
-          <div className="font-semibold text-slate-900 dark:text-slate-100 truncate flex items-center gap-1.5">
-            {v.name}
-            <Info className="w-3.5 h-3.5 text-slate-300 dark:text-slate-600 group-hover:text-teal-600 transition-colors" />
-          </div>
-          <span className={`text-[10px] font-semibold uppercase tracking-wide rounded-full px-2 py-0.5 ${meta.cls}`}>{meta.label}</span>
-        </div>
-        <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{v.dose} • {dateLabel}</div>
+    <>
+      <div className="card-soft hover-lift tap-scale p-4 flex items-start gap-3 text-left w-full group relative">
+        {/* Document button - positioned bottom-left */}
         {v.record && (
-          <div className="mt-2 flex items-center gap-1.5 text-xs text-slate-600 dark:text-slate-400">
-            <Stethoscope className="w-3.5 h-3.5" />
-            Dr. {v.record.doctor_name} <span className="text-slate-400 dark:text-slate-500">• {v.record.clinic_name}</span>
-          </div>
+          <button
+            type="button"
+            onClick={handleViewDocuments}
+            disabled={!canUploadMore && documentsCount === 0}
+            className={`absolute bottom-2 left-2 w-8 h-8 rounded-full text-white text-xs font-bold grid place-items-center shadow-sm z-10 transition-all ${
+              documentsCount > 0 || canUploadMore
+                ? 'bg-teal-600 hover:bg-teal-700 hover:opacity-80 cursor-pointer' 
+                : 'bg-slate-300 cursor-not-allowed opacity-50'
+            }`}
+            title={
+              canUploadMore
+                ? `Upload document (${documentsCount}/${MAX_DOCUMENTS})`
+                : documentsCount > 0
+                ? `View documents (${documentsCount}/${MAX_DOCUMENTS})`
+                : `Maximum ${MAX_DOCUMENTS} documents reached`
+            }
+            aria-label={
+              canUploadMore
+                ? `Upload vaccine document`
+                : documentsCount > 0
+                ? `View vaccination documents`
+                : `Maximum documents limit reached`
+            }
+          >
+            <FileText className="w-4 h-4" />
+            {documentsCount > 0 && (
+              <span className="absolute -top-1 -right-1 bg-white text-teal-600 text-[10px] font-bold rounded-full w-5 h-5 grid place-items-center">
+                {documentsCount}
+              </span>
+            )}
+          </button>
         )}
+
+        <button
+          type="button"
+          data-testid={`vaccine-${v.code}`}
+          onClick={onOpen}
+          className="flex items-start gap-3 text-left w-full cursor-pointer relative flex-1"
+        >
+          <div className={`w-10 h-10 rounded-xl grid place-items-center ${meta.cls} shrink-0`}>
+            <Icon className="w-5 h-5" strokeWidth={1.75} />
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center justify-between gap-2">
+              <div className="font-semibold text-slate-900 dark:text-slate-100 truncate flex items-center gap-1.5">
+                {v.name}
+                <Info className="w-3.5 h-3.5 text-slate-300 dark:text-slate-600 group-hover:text-teal-600 transition-colors" />
+              </div>
+              <span className={`text-[10px] font-semibold uppercase tracking-wide rounded-full px-2 py-0.5 ${meta.cls} shrink-0`}>{meta.label}</span>
+            </div>
+            <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{v.dose} • {dateLabel}</div>
+            {v.record && (
+              <div className="mt-2 flex items-center gap-1.5 text-xs text-slate-600 dark:text-slate-400">
+                <Stethoscope className="w-3.5 h-3.5" />
+                Dr. {v.record.doctor_name} <span className="text-slate-400 dark:text-slate-500">• {v.record.clinic_name}</span>
+              </div>
+            )}
+          </div>
+        </button>
       </div>
-    </button>
+
+      {/* Document viewer modal */}
+      <VaccinationDocumentViewer
+        isOpen={showDocuments}
+        onClose={() => setShowDocuments(false)}
+        documents={documents}
+        initialIndex={0}
+        canDelete={true}
+        onDelete={handleDeleteDocument}
+        isDeleting={isDeleting}
+        canUploadMore={canUploadMore}
+        onUploadMore={() => {
+          setShowDocuments(false);
+          setShowUpload(true);
+        }}
+      />
+
+      {/* Document upload modal */}
+      <VaccinationDocumentUpload
+        isOpen={showUpload}
+        onClose={() => setShowUpload(false)}
+        onUpload={handleUploadDocument}
+        vaccineeName={v.name}
+        maxDocuments={MAX_DOCUMENTS}
+        currentDocuments={documentsCount}
+        isUploading={isUploading}
+      />
+    </>
   );
 }

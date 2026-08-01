@@ -32,9 +32,7 @@ export default function AppShell({ children, showNotifications = false, unreadCo
               </Button>
             )}
             <Link to="/" data-testid="brand-logo" className="flex items-center gap-2 min-w-0">
-              <div className="w-9 h-9 rounded-xl bg-white dark:bg-slate-800 border border-emerald-100 dark:border-emerald-900/50 grid place-items-center shrink-0 shadow-sm">
-                <LeafLogo size={22} />
-              </div>
+              <LeafLogo size={56} />
               <span className="font-display text-lg tracking-tight truncate">Vardaan+</span>
             </Link>
           </div>

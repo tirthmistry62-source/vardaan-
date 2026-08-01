@@ -64,7 +64,7 @@ export default function ParentRegister() {
 
   return (
     <div className="min-h-screen aurora-bg flex items-center justify-center p-6">
-      <ThemeToggle floating />
+      
       <form onSubmit={submit} className="w-full max-w-md card-soft p-8">
         <Link to="/parent/login" data-testid="back-to-login" className="inline-flex items-center gap-2 text-sm text-slate-500 hover:text-slate-700 dark:hover:text-slate-200 dark:text-slate-300 mb-6">
           <ArrowLeft className="w-4 h-4" /> Back to login

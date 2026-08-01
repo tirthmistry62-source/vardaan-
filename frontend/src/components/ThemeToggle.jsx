@@ -5,16 +5,14 @@ import { useTheme } from "@/lib/theme";
 export default function ThemeToggle({ className = "", floating = false }) {
   const { theme, toggle } = useTheme();
   const isDark = theme === "dark";
-  const base = floating
-    ? "fixed top-4 right-4 z-50 rounded-full bg-white/90 dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700 backdrop-blur-md shadow-md"
-    : "rounded-full";
-  return (
+
+  const button = (
     <Button
       variant="ghost"
       size="icon"
       data-testid="theme-toggle"
       onClick={toggle}
-      className={`${base} relative overflow-hidden ${className}`}
+      className={`rounded-full bg-white/90 dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700 backdrop-blur-md shadow-md ${className}`}
       aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}
     >
       <Sun
@@ -29,4 +27,14 @@ export default function ThemeToggle({ className = "", floating = false }) {
       />
     </Button>
   );
+
+  if (floating) {
+    return (
+      <div className="fixed top-4 right-4 z-50">
+        {button}
+      </div>
+    );
+  }
+
+  return button;
 }

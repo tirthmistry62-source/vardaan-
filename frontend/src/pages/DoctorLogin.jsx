@@ -7,9 +7,12 @@ import { toast } from "sonner";
 import { api, setSession } from "@/lib/api";
 import { Loader2, Stethoscope, ArrowLeft } from "lucide-react";
 import ThemeToggle from "@/components/ThemeToggle";
+import { useTheme } from "@/lib/theme";
 
 export default function DoctorLogin() {
   const nav = useNavigate();
+  const { theme } = useTheme();
+  const isDark = theme === "dark";
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -75,18 +78,19 @@ export default function DoctorLogin() {
             </Button>
             <div className="mt-6 flex items-center justify-between text-sm">
               <Link data-testid="doc-register-link" to="/doctor/register" className="text-sky-700 dark:text-sky-300 font-medium hover:underline">Create doctor account</Link>
-              <Link to="/select-role" className="text-slate-500 hover:text-slate-700 dark:hover:text-slate-200 dark:text-slate-300">Switch role</Link>
             </div>
           </form>
         </div>
       </div>
 
       {/* Desktop layout */}
-      <div className="hidden md:flex min-h-screen items-center justify-center" style={{ background: '#080d19' }}>
+      <div className="hidden md:flex min-h-screen items-center justify-center transition-colors duration-300"
+        style={{ background: isDark ? '#080d19' : '#f1f5f9' }}>
         <ThemeToggle floating />
-        <div className="flex w-[calc(100vw-80px)] max-w-[1100px] rounded-[2rem] overflow-hidden shadow-2xl" style={{ background: '#0f1620', height: 'calc(100vh - 140px)', maxHeight: '620px' }}>
+        <div className="flex w-[calc(100vw-80px)] max-w-[1100px] rounded-[2rem] overflow-hidden shadow-2xl transition-colors duration-300"
+          style={{ background: isDark ? '#0f1620' : '#ffffff', height: 'calc(100vh - 140px)', maxHeight: '620px' }}>
 
-          {/* Left panel — navy-blue gradient */}
+          {/* Left panel — same in both themes */}
           <div
             className="flex flex-col p-10 lg:p-12 relative overflow-hidden"
             style={{
@@ -95,11 +99,8 @@ export default function DoctorLogin() {
               borderRadius: '1.5rem',
             }}
           >
-            {/* Decorative blurred circles */}
             <div className="absolute top-[-60px] right-[-60px] w-64 h-64 rounded-full opacity-20" style={{ background: '#3b82f6', filter: 'blur(60px)' }} />
             <div className="absolute bottom-[-40px] left-[-40px] w-48 h-48 rounded-full opacity-15" style={{ background: '#60a5fa', filter: 'blur(50px)' }} />
-
-            {/* Floating decorative plus/cross icons like in the image */}
             <div className="absolute inset-0 overflow-hidden pointer-events-none select-none" style={{ color: '#ffffff18' }}>
               <span className="absolute text-2xl" style={{ top: '38%', left: '12%' }}>+</span>
               <span className="absolute text-lg" style={{ top: '55%', right: '14%' }}>+</span>
@@ -109,12 +110,9 @@ export default function DoctorLogin() {
             </div>
 
             <div className="relative z-10 flex flex-col h-full">
-              {/* Icon */}
               <div className="w-11 h-11 rounded-2xl grid place-items-center" style={{ background: 'rgba(255,255,255,0.12)' }}>
                 <Stethoscope className="w-6 h-6 text-white" strokeWidth={1.75} />
               </div>
-
-              {/* Headline */}
               <h2 className="mt-6 text-[2.25rem] font-display font-semibold tracking-tight leading-[1.15]" style={{ color: '#fff' }}>
                 A lifelong vaccination record — always in your pocket.
               </h2>
@@ -122,13 +120,11 @@ export default function DoctorLogin() {
                 Search by Aadhaar. See what's due. Tap to record. Every parent gets an instant notification.
               </p>
               <div className="mt-2 text-sm" style={{ color: '#60a5fa' }}>© Vardaan+ 2026</div>
-
-              {/* Doctor illustration */}
               <div className="flex-1 flex items-end justify-center mt-3">
                 <img
                   src="/doctor-illustration.png"
                   alt="Doctor illustration"
-                  className="max-w-[260px] h-auto object-contain drop-shadow-xl rounded-2x1"
+                  className="max-w-[260px] h-auto object-contain drop-shadow-xl rounded-3xl"
                 />
               </div>
             </div>
@@ -137,15 +133,18 @@ export default function DoctorLogin() {
           {/* Right form panel */}
           <div className="flex-1 flex items-center justify-center px-10 lg:px-16">
             <form onSubmit={submit} className="w-full max-w-[380px]">
-              <Link to="/select-role" data-testid="back-to-roles" className="inline-flex items-center gap-2 text-sm mb-8 transition-colors" style={{ color: '#94a3b8' }}>
+              <Link to="/select-role" data-testid="back-to-roles" className="inline-flex items-center gap-2 text-sm mb-8 transition-colors"
+                style={{ color: isDark ? '#94a3b8' : '#64748b' }}>
                 <ArrowLeft className="w-4 h-4" /> Back to role selection
               </Link>
-              <h1 className="text-3xl font-display tracking-tight font-semibold" style={{ color: '#fff' }}>Doctor Login</h1>
-              <p className="mt-2 text-sm" style={{ color: '#64748b' }}>Sign in with your credentials to access patient vaccination records.</p>
+              <h1 className="text-3xl font-display tracking-tight font-semibold"
+                style={{ color: isDark ? '#fff' : '#0f172a' }}>Doctor Login</h1>
+              <p className="mt-2 text-sm"
+                style={{ color: isDark ? '#64748b' : '#94a3b8' }}>Sign in with your credentials to access patient vaccination records.</p>
 
               <div className="mt-8 space-y-5">
                 <div>
-                  <Label style={{ color: '#cbd5e1' }}>Phone number</Label>
+                  <Label style={{ color: isDark ? '#cbd5e1' : '#334155' }}>Phone number</Label>
                   <Input
                     data-testid="doc-login-phone"
                     inputMode="numeric"
@@ -153,11 +152,15 @@ export default function DoctorLogin() {
                     onChange={(e) => setPhone(e.target.value.replace(/\D/g, "").slice(0, 15))}
                     placeholder="Registered phone"
                     className="mt-2 h-12 rounded-xl"
-                    style={{ background: '#0a0f1a', borderColor: '#1e293b', color: '#fff' }}
+                    style={{
+                      background: isDark ? '#0a0f1a' : '#f8fafc',
+                      borderColor: isDark ? '#1e293b' : '#e2e8f0',
+                      color: isDark ? '#fff' : '#0f172a',
+                    }}
                   />
                 </div>
                 <div>
-                  <Label style={{ color: '#cbd5e1' }}>Password</Label>
+                  <Label style={{ color: isDark ? '#cbd5e1' : '#334155' }}>Password</Label>
                   <Input
                     data-testid="doc-login-password"
                     type="password"
@@ -165,7 +168,11 @@ export default function DoctorLogin() {
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="Enter your password"
                     className="mt-2 h-12 rounded-xl"
-                    style={{ background: '#0a0f1a', borderColor: '#1e293b', color: '#fff' }}
+                    style={{
+                      background: isDark ? '#0a0f1a' : '#f8fafc',
+                      borderColor: isDark ? '#1e293b' : '#e2e8f0',
+                      color: isDark ? '#fff' : '#0f172a',
+                    }}
                   />
                 </div>
               </div>
@@ -182,7 +189,6 @@ export default function DoctorLogin() {
 
               <div className="mt-6 flex items-center justify-between text-sm">
                 <Link data-testid="doc-register-link" to="/doctor/register" className="font-medium transition-colors" style={{ color: '#60a5fa' }}>Create doctor account</Link>
-                <Link to="/select-role" className="transition-colors" style={{ color: '#94a3b8' }}>Switch role</Link>
               </div>
             </form>
           </div>

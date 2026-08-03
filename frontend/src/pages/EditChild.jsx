@@ -11,9 +11,6 @@ import { toast } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Loader2, Trash2, ShieldAlert } from "lucide-react";
 
-const phraseFor = (name) =>
-  `Yes, I want to delete ${name}'s account, and I approve that the vaccination details and history will be permanently deleted and cannot be recovered.`;
-
 export default function EditChild() {
   const nav = useNavigate();
   const { id } = useParams();
@@ -22,9 +19,7 @@ export default function EditChild() {
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState({ name: "", dob: "", gender: "", weight_kg: "" });
 
-  const [warnOpen, setWarnOpen] = useState(false);
-  const [confirmOpen, setConfirmOpen] = useState(false);
-  const [phrase, setPhrase] = useState("");
+  const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
@@ -69,11 +64,9 @@ export default function EditChild() {
   };
 
   const doDelete = async () => {
-    const expected = phraseFor(child.name);
-    if (phrase.trim() !== expected) return toast.error("Phrase does not match");
     setDeleting(true);
     try {
-      await api.post(`/parent/children/${id}/delete`, { confirm_phrase: phrase.trim() });
+      await api.post(`/parent/children/${id}/delete`);
       toast.success(`${child.name} deleted`);
       nav("/parent/dashboard", { replace: true });
     } catch (err) {
@@ -146,9 +139,9 @@ export default function EditChild() {
             <div className="flex-1">
               <h2 className="font-display text-lg text-slate-900 dark:text-slate-100">Delete child</h2>
               <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-                Permanently deletes {child.name}, their vaccination history, and all related notifications. Cannot be undone.
+                Permanently remove {child.name}&apos;s profile and all related child data.
               </p>
-              <Button data-testid="delete-child-btn" onClick={() => setWarnOpen(true)} variant="destructive" className="mt-4 rounded-full gap-2">
+              <Button data-testid="delete-child-btn" onClick={() => setDeleteOpen(true)} variant="destructive" className="mt-4 rounded-full gap-2">
                 <Trash2 className="w-4 h-4" /> Delete {child.name}
               </Button>
             </div>
@@ -156,54 +149,27 @@ export default function EditChild() {
         </div>
       </div>
 
-      <Dialog open={warnOpen} onOpenChange={setWarnOpen}>
+      <Dialog open={deleteOpen} onOpenChange={setDeleteOpen}>
         <DialogContent className="rounded-3xl">
           <DialogHeader>
             <DialogTitle className="font-display text-2xl">Delete {child.name}?</DialogTitle>
-            <DialogDescription>
-              This will permanently erase every vaccination record, notification, and document tied to {child.name}. Neither you nor the other parent will be able to recover this data.
-              <br /><br />
-              <span className="font-semibold text-rose-600 dark:text-rose-300">This action cannot be undone.</span>
+            <DialogDescription className="text-slate-600 dark:text-slate-400 mt-2">
+              This will permanently delete <span className="font-semibold text-slate-900 dark:text-slate-100">{child.name}</span>&apos;s profile, vaccination records, and notifications. This cannot be undone, and all child data will be lost.
             </DialogDescription>
           </DialogHeader>
-          <DialogFooter className="gap-2">
-            <Button variant="ghost" data-testid="child-warn-cancel" onClick={() => setWarnOpen(false)} className="rounded-full">Cancel</Button>
-            <Button variant="destructive" data-testid="child-warn-continue" onClick={() => { setWarnOpen(false); setConfirmOpen(true); }} className="rounded-full">
-              I understand, continue
+          <DialogFooter className="gap-2 mt-4">
+            <Button variant="ghost" data-testid="child-delete-cancel" onClick={() => setDeleteOpen(false)} className="rounded-full">
+              Cancel
             </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={confirmOpen} onOpenChange={(o) => { setConfirmOpen(o); if (!o) setPhrase(""); }}>
-        <DialogContent className="rounded-3xl">
-          <DialogHeader>
-            <DialogTitle className="font-display text-2xl">Final confirmation</DialogTitle>
-            <DialogDescription>
-              To confirm, type this exact phrase:
-              <div className="mt-3 p-3 rounded-lg bg-slate-100 text-slate-900 dark:text-slate-100 font-mono text-xs leading-relaxed select-all whitespace-pre-wrap break-words">
-                {phraseFor(child.name)}
-              </div>
-            </DialogDescription>
-          </DialogHeader>
-          <textarea
-            data-testid="child-delete-phrase"
-            value={phrase}
-            onChange={(e) => setPhrase(e.target.value)}
-            placeholder="Type the phrase above exactly"
-            rows={4}
-            className="w-full rounded-xl border border-slate-300 dark:border-slate-700 p-3 text-sm"
-          />
-          <DialogFooter className="gap-2">
-            <Button variant="ghost" data-testid="child-confirm-cancel" onClick={() => setConfirmOpen(false)} className="rounded-full">Cancel</Button>
             <Button
               variant="destructive"
               data-testid="child-confirm-delete"
               onClick={doDelete}
-              disabled={deleting || phrase.trim() !== phraseFor(child.name)}
-              className="rounded-full"
+              disabled={deleting}
+              className="rounded-full gap-2"
             >
-              {deleting ? <Loader2 className="w-4 h-4 animate-spin" /> : "Delete permanently"}
+              {deleting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
+              Confirm delete
             </Button>
           </DialogFooter>
         </DialogContent>

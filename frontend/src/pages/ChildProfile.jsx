@@ -5,11 +5,13 @@ import VaccineInfoDialog from "@/components/VaccineInfoDialog";
 import UIPBadge from "@/components/UIPBadge";
 import VaccinationDocumentViewer from "@/components/VaccinationDocumentViewer";
 import VaccinationDocumentUpload from "@/components/VaccinationDocumentUpload";
-import { api } from "@/lib/api";
+import { api, getSession } from "@/lib/api";
 import { useVaccinationDocuments } from "@/hooks/useVaccinationDocuments";
+import { generateVaccinationPDF } from "@/lib/generateVaccinationPDF";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Progress } from "@/components/ui/progress";
-import { Pencil, CheckCircle2, Clock, AlertTriangle, CalendarDays, User2, Stethoscope, Info, FileText } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Pencil, CheckCircle2, Clock, AlertTriangle, CalendarDays, User2, Stethoscope, Info, FileText, FileDown, Loader2 } from "lucide-react";
 import { computeVaccineStatuses, completionPercent, ageString } from "@/lib/vaccineStatus";
 import { MILESTONES } from "@/lib/vaccineSchedule";
 
@@ -25,6 +27,10 @@ export default function ChildProfile() {
   const [child, setChild] = useState(null);
   const [loading, setLoading] = useState(true);
   const [selectedVaccine, setSelectedVaccine] = useState(null);
+  const [pdfLoading, setPdfLoading] = useState(false);
+
+  const session = getSession();
+  const isParent = session?.role === "parent";
 
   useEffect(() => {
     (async () => {
@@ -38,6 +44,44 @@ export default function ChildProfile() {
       }
     })();
   }, [id]);
+
+  const handleExportPDF = async () => {
+    if (!child) return;
+    setPdfLoading(true);
+    try {
+      const parents = [];
+      try {
+        const { data: me } = await api.get("/parent/me");
+        const relation = child.mother_aadhaar === me.aadhaar ? "Mother" : "Father";
+        parents.push({ full_name: me.full_name, phone: me.phone, relation });
+
+        // Fetch co-parent using the dedicated endpoint
+        const coAadhaar = relation === "Mother" ? child.father_aadhaar : child.mother_aadhaar;
+        if (coAadhaar) {
+          try {
+            const { data: co } = await api.get(`/parent/co-parent?aadhaar=${coAadhaar}`);
+            const coRelation = relation === "Mother" ? "Father" : "Mother";
+            parents.push({ full_name: co.full_name, phone: co.phone, relation: coRelation });
+          } catch (_) {
+            // co-parent not registered — skip silently
+          }
+        }
+      } catch (_) {
+        // parent/me failed — proceed without parent info
+      }
+
+      const doc = await generateVaccinationPDF({ child, parents });
+
+      // Save + open preview in new tab
+      const pdfName = `${child.name.replace(/\s+/g, "_")}_Vaccination_Record.pdf`;
+      doc.save(pdfName);
+    } catch (err) {
+      console.error("PDF generation failed:", err);
+      alert("Failed to generate PDF. Please try again.");
+    } finally {
+      setPdfLoading(false);
+    }
+  };
 
   const items = useMemo(() => child ? computeVaccineStatuses(child.dob, child.vaccinations) : [], [child]);
   const grouped = useMemo(() => {
@@ -63,7 +107,21 @@ export default function ChildProfile() {
 
   return (
     <AppShell showNotifications showBack backTo="/parent/dashboard">
-      <div className="flex items-center justify-end mb-4">
+      <div className="flex items-center justify-end gap-3 mb-4">
+        {isParent && (
+          <Button
+            onClick={handleExportPDF}
+            disabled={pdfLoading}
+            variant="outline"
+            size="sm"
+            className="gap-2 border-teal-600 text-teal-700 dark:text-teal-300 dark:border-teal-500 hover:bg-teal-50 dark:hover:bg-teal-900/30"
+          >
+            {pdfLoading
+              ? <><Loader2 className="w-4 h-4 animate-spin" /> Generating...</>
+              : <><FileDown className="w-4 h-4" /> Export PDF</>
+            }
+          </Button>
+        )}
         <Link
           to={`/parent/child/${child.id}/edit`}
           data-testid="edit-child-link"

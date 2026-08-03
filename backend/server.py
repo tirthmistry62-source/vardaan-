@@ -688,6 +688,19 @@ async def add_child(body: ChildCreateIn, cur=Depends(require_parent)):
     child = await sb_insert('children', doc)
     return await _child_public(child)
 
+@api.get('/parent/co-parent')
+async def get_co_parent(aadhaar: str, cur=Depends(require_parent)):
+    """
+    Look up a co-parent by Aadhaar — used for PDF export to show both parents.
+    Returns only safe public fields (name, phone). No sensitive data.
+    """
+    if not valid_aadhaar(aadhaar):
+        raise HTTPException(400, "Invalid Aadhaar")
+    p = await sb_find_one('parents', eq('aadhaar', aadhaar))
+    if not p:
+        raise HTTPException(404, "Parent not found")
+    return { 'full_name': p['full_name'], 'phone': p['phone'] }
+
 @api.get('/parent/children')
 async def list_children(cur=Depends(require_parent)):
     parent = await sb_find_one('parents', eq('id', cur['user_id']))
@@ -752,14 +765,9 @@ async def child_update(child_id: str, body: ChildUpdateIn, cur=Depends(require_p
     fresh = await sb_find_one('children', eq('id', child_id))
     return await _child_public(fresh)
 
-CONFIRM_DELETE_CHILD_TEMPLATE = 'Yes, I want to delete {name}\'s account, and I approve that the vaccination details and history will be permanently deleted and cannot be recovered.'
-
 @api.post('/parent/children/{child_id}/delete')
-async def child_delete(child_id: str, body: ConfirmDeleteIn, cur=Depends(require_parent)):
+async def child_delete(child_id: str, body: Optional[dict] = None, cur=Depends(require_parent)):
     _, child = await _assert_parent_owns_child(cur['user_id'], child_id)
-    expected = CONFIRM_DELETE_CHILD_TEMPLATE.format(name=child['name'])
-    if body.confirm_phrase.strip() != expected:
-        raise HTTPException(400, f'You must type exactly: "{expected}"')
     await sb_delete('notifications', eq('child_id', child_id))
     await sb_delete('children', eq('id', child_id))  # vaccinations cascade
     return {'ok': True}

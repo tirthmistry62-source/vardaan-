@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 import AppShell from "@/components/AppShell";
 import VaccineInfoDialog from "@/components/VaccineInfoDialog";
 import VaccinationDocumentViewer from "@/components/VaccinationDocumentViewer";
@@ -25,6 +25,7 @@ const STATUS_META = {
 
 export default function DoctorChildRecord() {
   const nav = useNavigate();
+  const location = useLocation();
   const { id } = useParams();
   const [child, setChild] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -55,6 +56,18 @@ export default function DoctorChildRecord() {
   const completedItems = items.filter(i => i.status === "completed");
   const upcomingItems = items.filter(i => i.status === "upcoming");
   const pct = child ? completionPercent(child.dob, child.vaccinations) : 0;
+  const parentName = location.state?.parentName;
+  const parentRoleText = useMemo(() => {
+    const parentRoleFromState = location.state?.parentRole;
+    if (parentRoleFromState === "mother") return "mother";
+    if (parentRoleFromState === "father") return "father";
+    if (!child) return "mother or father";
+    const hasMother = Boolean(child.mother_aadhaar);
+    const hasFather = Boolean(child.father_aadhaar);
+    if (hasMother && !hasFather) return "mother";
+    if (hasFather && !hasMother) return "father";
+    return "mother or father";
+  }, [child, location.state?.parentRole]);
 
   const toggle = (code) => {
     const next = new Set(selected);
@@ -120,7 +133,7 @@ export default function DoctorChildRecord() {
               </div>
               <div className="flex-1">
                 <h2 className="font-display text-lg text-slate-900 dark:text-slate-100">Parent access required</h2>
-                <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">Enter the six-digit code shared by the linked mother or father before you can record vaccinations for {child.name}.</p>
+                <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">Enter the six-digit code shared by {parentName || `the linked ${parentRoleText}`} before you can record vaccinations for {child.name}.</p>
                 <form onSubmit={verifyAccess} className="mt-4 flex flex-col sm:flex-row gap-3">
                   <Input
                     data-testid="doc-access-code"

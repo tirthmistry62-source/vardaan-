@@ -79,7 +79,11 @@ export default function DoctorDashboard() {
                 <div className="card-soft p-8 mt-4 text-center text-slate-500 dark:text-slate-400">No children linked to this parent yet.</div>
               ) : (
                 <div className="grid md:grid-cols-2 gap-4 mt-4">
-                  {result.children.map(c => <ChildResultCard key={c.id} c={c} onOpen={() => nav(`/doctor/child/${c.id}`)} />)}
+                  {result.children.map(c => {
+                    const parentRole = c.mother_aadhaar === aadhaar ? "mother" : c.father_aadhaar === aadhaar ? "father" : null;
+                    const parentName = result.parent?.full_name || "linked parent";
+                    return <ChildResultCard key={c.id} c={c} onOpen={() => nav(`/doctor/child/${c.id}`, { state: { parentRole, parentName } })} />;
+                  })}
                 </div>
               )}
             </>
@@ -87,7 +91,7 @@ export default function DoctorDashboard() {
             <>
               <h2 className="text-lg font-display tracking-tight text-slate-800 dark:text-slate-200">Child</h2>
               <div className="grid md:grid-cols-2 gap-4 mt-4">
-                {result.children.map(c => <ChildResultCard key={c.id} c={c} onOpen={() => nav(`/doctor/child/${c.id}`)} />)}
+                {result.children.map(c => <ChildResultCard key={c.id} c={c} onOpen={() => nav(`/doctor/child/${c.id}`, { state: { parentRole: null, parentName: null } })} />)}
               </div>
             </>
           )}

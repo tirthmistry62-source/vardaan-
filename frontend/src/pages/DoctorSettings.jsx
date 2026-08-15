@@ -40,7 +40,7 @@ export default function DoctorSettings() {
         clinic_address: data.clinic_address || "",
       });
     })();
-  }, []);
+  }, [i18n]);
 
   const upd = (k) => (e) => setForm({ ...form, [k]: e.target.value });
 

@@ -41,7 +41,7 @@ export default function VaccineInfoDialog({ vaccine, open, onOpenChange }) {
         data-testid="vaccine-info-dialog"
         className="rounded-3xl max-w-lg p-0 overflow-hidden max-h-[85vh] flex flex-col"
       >
-        {/* Header */}
+        {/* Header. */}
         <div className="p-6 pb-5 bg-gradient-to-br from-teal-50 to-sky-50 dark:from-teal-900/40 dark:to-sky-900/40 border-b border-slate-200 dark:border-slate-800">
           <div className="flex items-start gap-3">
             <div className={`w-12 h-12 rounded-2xl grid place-items-center ${meta.cls} shrink-0`}>

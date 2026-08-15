@@ -8,13 +8,15 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { Stethoscope, Trash2, ShieldAlert, Loader2 } from "lucide-react";
+import { Stethoscope, Trash2, ShieldAlert, Loader2, LogOut } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 const DELETE_PHRASE = "DELETE MY ACCOUNT";
 
 export default function DoctorSettings() {
   const nav = useNavigate();
   const session = getSession();
+  const { i18n, t } = useTranslation();
   const [me, setMe] = useState(null);
   const [form, setForm] = useState({ doctor_name: "", phone: "", clinic_name: "", clinic_address: "" });
   const [saving, setSaving] = useState(false);
@@ -28,6 +30,9 @@ export default function DoctorSettings() {
     (async () => {
       const { data } = await api.get("/doctor/me");
       setMe(data);
+      if (data.language) {
+  await i18n.changeLanguage(data.language);
+}
       setForm({
         doctor_name: data.doctor_name || "",
         phone: data.phone || "",
@@ -44,41 +49,42 @@ export default function DoctorSettings() {
     const updates = {};
     if (form.doctor_name.trim() && form.doctor_name.trim() !== me.doctor_name) updates.doctor_name = form.doctor_name.trim();
     if (form.phone !== me.phone) {
-      if (!/^\d{7,15}$/.test(form.phone)) return toast.error("Invalid phone number");
+      if (!/^\d{7,15}$/.test(form.phone)) return toast.error(t("doctorSettings.invalidPhone"));
       updates.phone = form.phone;
     }
     if (form.clinic_name.trim() !== me.clinic_name) updates.clinic_name = form.clinic_name.trim();
     if (form.clinic_address.trim() !== me.clinic_address) updates.clinic_address = form.clinic_address.trim();
-    if (Object.keys(updates).length === 0) return toast.info("Nothing to update");
+    if (i18n.language !== me.language) updates.language = i18n.language;
+    if (Object.keys(updates).length === 0) return toast.success("Profile updated");
     setSaving(true);
     try {
       const { data } = await api.patch("/doctor/me", updates);
       setMe(data);
       setSession({ token: session.token, role: "doctor", user: data });
-      toast.success("Profile updated");
+      toast.success(t("doctorSettings.profileUpdated"));
     } catch (err) {
-      toast.error(err?.response?.data?.detail || "Update failed");
+      toast.error(t("doctorSettings.invalidPhone"));
     } finally {
       setSaving(false);
     }
   };
 
   const doDelete = async () => {
-    if (phrase.trim() !== DELETE_PHRASE) return toast.error(`Type exactly: ${DELETE_PHRASE}`);
+    if (phrase.trim() !== DELETE_PHRASE) return toast.error(t("doctorSettings.typeExactly", { phrase: DELETE_PHRASE }));
     setDeleting(true);
     try {
       await api.post("/doctor/me/delete", { confirm_phrase: phrase.trim() });
       clearSession();
-      toast.success("Account deleted");
+      toast.success(t("doctorSettings.accountDeleted"));
       nav("/select-role", { replace: true });
     } catch (err) {
-      toast.error(err?.response?.data?.detail || "Delete failed");
+      toast.error(err?.response?.data?.detail || t("doctorSettings.deleteFailed"));
     } finally {
       setDeleting(false);
     }
   };
 
-  if (!me) return <AppShell showBack backTo="/doctor/dashboard">Loading…</AppShell>;
+  if (!me) return <AppShell showBack backTo="/doctor/dashboard">{t("doctorSettings.loading")}</AppShell>;
 
   return (
     <AppShell showBack backTo="/doctor/dashboard">
@@ -88,31 +94,37 @@ export default function DoctorSettings() {
             <Stethoscope className="w-6 h-6" strokeWidth={1.5} />
           </div>
           <div>
-            <h1 className="text-3xl font-display tracking-tight text-slate-900 dark:text-slate-100">Profile & Settings</h1>
+            <h1 className="text-3xl font-display tracking-tight text-slate-900 dark:text-slate-100">
+  {t("profileSettings")}
+</h1>
             <p className="text-slate-500 dark:text-slate-400 text-sm">Dr. {me.doctor_name}</p>
           </div>
         </div>
 
         <form onSubmit={save} className="card-soft p-6 grid gap-5">
-          <h2 className="font-display text-lg text-slate-900 dark:text-slate-100">Account details</h2>
+          <h2 className="font-display text-lg text-slate-900 dark:text-slate-100">
+  {t("accountDetails")}
+</h2>
 
           <div>
-            <Label>Doctor name</Label>
+            <Label>{t("doctorSettings.doctorName")}</Label>
             <div className="mt-2 flex items-stretch rounded-xl border border-slate-300 dark:border-slate-700 focus-within:ring-2 focus-within:ring-teal-500 dark:ring-teal-400/20 focus-within:border-teal-600 overflow-hidden bg-white dark:bg-slate-900">
               <span className="px-4 flex items-center bg-slate-50 dark:bg-slate-800 text-slate-500 dark:text-slate-400 font-semibold border-r border-slate-200 dark:border-slate-800 select-none">Dr.</span>
               <Input
                 data-testid="dr-settings-name"
                 value={form.doctor_name}
                 onChange={upd("doctor_name")}
-                placeholder="e.g. Anjali Verma"
+                placeholder={t("doctorSettings.doctorNamePlaceholder")}
                 className="flex-1 h-12 border-0 rounded-none focus-visible:ring-0 focus-visible:ring-offset-0 shadow-none"
               />
             </div>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1.5">Just your name — the &quot;Dr.&quot; title is shown automatically.</p>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1.5">
+  {t("doctorSettings.doctorNameDescription")}
+</p>
           </div>
 
           <div>
-            <Label>Phone number</Label>
+            <Label>{t("phoneNumber")}</Label>
             <Input
               data-testid="dr-settings-phone"
               inputMode="numeric"
@@ -123,19 +135,42 @@ export default function DoctorSettings() {
           </div>
 
           <div>
-            <Label>Clinic / hospital name</Label>
+            <Label>{t("doctorSettings.clinicName")}</Label>
             <Input data-testid="dr-settings-clinic" value={form.clinic_name} onChange={upd("clinic_name")} className="mt-2 h-12 rounded-xl" />
           </div>
 
           <div>
-            <Label>Clinic address</Label>
+            <Label>{t("doctorSettings.clinicAddress")}</Label>
             <Textarea data-testid="dr-settings-address" value={form.clinic_address} onChange={upd("clinic_address")} rows={3} className="mt-2 rounded-xl" />
           </div>
 
           <Button data-testid="dr-settings-save" type="submit" disabled={saving} className="h-12 rounded-full bg-sky-700 hover:bg-sky-800 text-white">
-            {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : "Save changes"}
+            {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : t("saveChanges")}
           </Button>
         </form>
+
+        <div className="card-soft p-6 mt-8">
+  <h2 className="font-display text-lg text-slate-900 dark:text-slate-100">
+    {t("session")}
+  </h2>
+
+  <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+    {t("signOutDescription")}
+  </p>
+
+  <Button
+    onClick={() => {
+      clearSession();
+      nav("/select-role", { replace: true });
+    }}
+    variant="outline"
+    className="mt-4 rounded-full gap-2"
+  >
+    <LogOut className="w-4 h-4" />
+{t("logout")}
+    
+  </Button>
+</div>
 
         <div className="card-soft p-6 mt-8 border-rose-200 dark:border-rose-900/60">
           <div className="flex items-start gap-3">
@@ -143,12 +178,12 @@ export default function DoctorSettings() {
               <ShieldAlert className="w-5 h-5" />
             </div>
             <div className="flex-1">
-              <h2 className="font-display text-lg text-slate-900 dark:text-slate-100">Danger zone</h2>
+              <h2 className="font-display text-lg text-slate-900 dark:text-slate-100">{t("dangerZone")}</h2>
               <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-                Delete your doctor account permanently. Vaccination records you have already recorded will remain in the children&apos;s medical history — this preserves lifelong records for their families.
+                {t("doctorSettings.dangerDescription")}
               </p>
               <Button data-testid="dr-delete-account-btn" onClick={() => setWarnOpen(true)} variant="destructive" className="mt-4 rounded-full gap-2">
-                <Trash2 className="w-4 h-4" /> Delete my account
+                <Trash2 className="w-4 h-4" /> {t("deleteAccount")}
               </Button>
             </div>
           </div>
@@ -158,19 +193,21 @@ export default function DoctorSettings() {
       <Dialog open={warnOpen} onOpenChange={setWarnOpen}>
         <DialogContent className="rounded-3xl">
           <DialogHeader>
-            <DialogTitle className="font-display text-2xl">Delete your account?</DialogTitle>
+            <DialogTitle className="font-display text-2xl">
+  {t("doctorSettings.deleteAccountQuestion")}
+</DialogTitle>
             <DialogDescription>
-              This will permanently remove your Vardaan+ doctor account. You will no longer be able to search patients or record vaccinations.
+              {t("doctorSettings.deleteAccountWarning")}
               <br /><br />
-              Any vaccinations you have already recorded remain in each child&apos;s medical history so their family keeps a complete record.
+              {t("doctorSettings.vaccinationsRemain")}
               <br /><br />
-              <span className="font-semibold text-rose-600 dark:text-rose-300">This action cannot be undone.</span>
+              <span className="font-semibold text-rose-600 dark:text-rose-300">{t("doctorSettings.cannotUndo")}</span>
             </DialogDescription>
           </DialogHeader>
           <DialogFooter className="gap-2">
-            <Button variant="ghost" data-testid="dr-warn-cancel" onClick={() => setWarnOpen(false)} className="rounded-full">Cancel</Button>
+            <Button variant="ghost" data-testid="dr-warn-cancel" onClick={() => setWarnOpen(false)} className="rounded-full">{t("doctorSettings.cancel")}</Button>
             <Button variant="destructive" data-testid="dr-warn-continue" onClick={() => { setWarnOpen(false); setConfirmOpen(true); }} className="rounded-full">
-              I understand, continue
+              {t("doctorSettings.understandContinue")}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -179,9 +216,11 @@ export default function DoctorSettings() {
       <Dialog open={confirmOpen} onOpenChange={(o) => { setConfirmOpen(o); if (!o) setPhrase(""); }}>
         <DialogContent className="rounded-3xl">
           <DialogHeader>
-            <DialogTitle className="font-display text-2xl">Final confirmation</DialogTitle>
+            <DialogTitle className="font-display text-2xl">
+  {t("doctorSettings.finalConfirmation")}
+</DialogTitle>
             <DialogDescription>
-              To confirm, type this phrase exactly:
+              {t("doctorSettings.typePhraseExactly")}
               <div className="mt-3 p-3 rounded-lg bg-slate-100 text-slate-900 dark:text-slate-100 font-mono text-sm select-all">{DELETE_PHRASE}</div>
             </DialogDescription>
           </DialogHeader>
@@ -189,11 +228,11 @@ export default function DoctorSettings() {
             data-testid="dr-delete-phrase-input"
             value={phrase}
             onChange={(e) => setPhrase(e.target.value)}
-            placeholder="Type the phrase above"
+            placeholder={t("doctorSettings.phrasePlaceholder")}
             className="h-12 rounded-xl"
           />
           <DialogFooter className="gap-2">
-            <Button variant="ghost" data-testid="dr-confirm-cancel" onClick={() => setConfirmOpen(false)} className="rounded-full">Cancel</Button>
+            <Button variant="ghost" data-testid="dr-confirm-cancel" onClick={() => setConfirmOpen(false)} className="rounded-full">{t("doctorSettings.cancel")}</Button>
             <Button
               variant="destructive"
               data-testid="dr-confirm-delete-btn"
@@ -201,7 +240,7 @@ export default function DoctorSettings() {
               disabled={deleting || phrase.trim() !== DELETE_PHRASE}
               className="rounded-full"
             >
-              {deleting ? <Loader2 className="w-4 h-4 animate-spin" /> : "Delete permanently"}
+              {deleting ? <Loader2 className="w-4 h-4 animate-spin" /> : t("doctorSettings.deletePermanently")}
             </Button>
           </DialogFooter>
         </DialogContent>

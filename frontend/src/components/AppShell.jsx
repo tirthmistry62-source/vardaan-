@@ -1,6 +1,7 @@
 import { Link, useNavigate } from "react-router-dom";
-import { LogOut, Bell, ArrowLeft, Settings } from "lucide-react";
-import { clearSession, getSession } from "@/lib/api";
+import { Bell, ArrowLeft, Settings } from "lucide-react";
+import { api, clearSession, getSession } from "@/lib/api";
+import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import ThemeToggle from "@/components/ThemeToggle";
 import LeafLogo from "@/components/LeafLogo";
@@ -8,6 +9,9 @@ import LeafLogo from "@/components/LeafLogo";
 export default function AppShell({ children, showNotifications = false, unreadCount = 0, showBack = false, backTo = null, settingsPath = null }) {
   const nav = useNavigate();
   const session = getSession();
+  const { t } = useTranslation();
+
+
 
   const logout = () => {
     clearSession();
@@ -26,7 +30,7 @@ export default function AppShell({ children, showNotifications = false, unreadCo
                 data-testid="header-back-btn"
                 onClick={() => (backTo ? nav(backTo) : nav(-1))}
                 className="rounded-full shrink-0"
-                aria-label="Back"
+                aria-label={t("back")}
               >
                 <ArrowLeft className="w-5 h-5" />
               </Button>
@@ -37,7 +41,9 @@ export default function AppShell({ children, showNotifications = false, unreadCo
             </Link>
           </div>
           <div className="flex items-center gap-1">
-            <ThemeToggle />
+ 
+
+  <ThemeToggle />
             {settingsPath && (
               <Button
                 variant="ghost"
@@ -45,7 +51,7 @@ export default function AppShell({ children, showNotifications = false, unreadCo
                 data-testid="nav-settings-btn"
                 onClick={() => nav(settingsPath)}
                 className="rounded-full"
-                aria-label="Settings"
+                aria-label={t("settings")}
               >
                 <Settings className="w-5 h-5" />
               </Button>
@@ -57,7 +63,7 @@ export default function AppShell({ children, showNotifications = false, unreadCo
                 data-testid="nav-notifications-btn"
                 onClick={() => nav("/parent/notifications")}
                 className="rounded-full relative"
-                aria-label="Notifications"
+                aria-label={t("notifications")}
               >
                 <Bell className="w-5 h-5" />
                 {unreadCount > 0 && (
@@ -67,16 +73,7 @@ export default function AppShell({ children, showNotifications = false, unreadCo
                 )}
               </Button>
             )}
-            {session && (
-              <Button
-                variant="ghost"
-                data-testid="nav-logout-btn"
-                onClick={logout}
-                className="rounded-full gap-2"
-              >
-                <LogOut className="w-4 h-4" /> <span className="hidden sm:inline">Logout</span>
-              </Button>
-            )}
+           
           </div>
         </div>
       </header>

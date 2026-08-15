@@ -7,24 +7,26 @@ import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { Search, User2, Baby, ArrowRight, Loader2 } from "lucide-react";
 import { ageString, maskAadhaar } from "@/lib/vaccineStatus";
+import { useTranslation } from "react-i18next";
 
 export default function DoctorDashboard() {
   const nav = useNavigate();
   const session = getSession();
+  const { t } = useTranslation();
   const [aadhaar, setAadhaar] = useState("");
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
 
   const search = async (e) => {
     e.preventDefault();
-    if (!/^\d{12}$/.test(aadhaar)) return toast.error("Enter a 12-digit Aadhaar");
+    if (!/^\d{12}$/.test(aadhaar)) return toast.error(t("doctorDashboard.invalidAadhaar"));
     setLoading(true);
     setResult(null);
     try {
       const { data } = await api.get(`/doctor/search?aadhaar=${aadhaar}`);
       setResult(data);
     } catch (err) {
-      toast.error(err?.response?.data?.detail || "No record found");
+      toast.error(err?.response?.data?.detail || t("doctorDashboard.noRecordFound"));
     } finally {
       setLoading(false);
     }
@@ -33,13 +35,17 @@ export default function DoctorDashboard() {
   return (
     <AppShell settingsPath="/doctor/settings">
       <div className="mb-6">
-        <p className="text-slate-500 dark:text-slate-400 text-sm">Signed in as</p>
-        <h1 className="text-3xl font-display tracking-tight text-slate-900 dark:text-slate-100 mt-1">Dr. {session?.user?.doctor_name}</h1>
+        <p className="text-slate-500 dark:text-slate-400 text-sm">{t("doctorDashboard.signedInAs")}</p>
+        <h1 className="text-3xl font-display tracking-tight text-slate-900 dark:text-slate-100 mt-1">
+  Dr. {session?.user?.doctor_name}
+</h1>
         <p className="text-slate-500 dark:text-slate-400 mt-1">{session?.user?.clinic_name}</p>
       </div>
 
       <form onSubmit={search} className="card-soft p-6 sm:p-8">
-        <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Search a child or parent by Aadhaar</label>
+        <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
+  {t("doctorDashboard.searchByAadhaar")}
+</label>
         <div className="mt-3 flex flex-col sm:flex-row gap-3">
           <div className="relative flex-1">
             <Search className="w-5 h-5 absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500" />
@@ -48,16 +54,16 @@ export default function DoctorDashboard() {
               inputMode="numeric"
               value={aadhaar}
               onChange={(e) => setAadhaar(e.target.value.replace(/\D/g, "").slice(0, 12))}
-              placeholder="Enter 12-digit Aadhaar number"
+              placeholder={t("doctorDashboard.aadhaarPlaceholder")}
               className="h-14 rounded-2xl pl-12 text-base"
             />
           </div>
           <Button data-testid="doc-search-submit" type="submit" disabled={loading} className="h-14 rounded-2xl px-8 bg-sky-700 hover:bg-sky-800 text-white gap-2">
-            {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <><Search className="w-4 h-4" /> Search</>}
+            {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <><Search className="w-4 h-4" /> {t("doctorDashboard.search")}</>}
           </Button>
         </div>
         <p className="mt-3 text-xs text-slate-500 dark:text-slate-400">
-          Auto-detects parent or child. In this build, access is granted immediately after search.
+          {t("doctorDashboard.autoDetectInfo")}
         </p>
       </form>
 
@@ -71,27 +77,44 @@ export default function DoctorDashboard() {
                 </div>
                 <div>
                   <div className="font-display text-lg text-slate-900 dark:text-slate-100">{result.parent.full_name}</div>
-                  <div className="text-xs text-slate-500 dark:text-slate-400">Parent • {maskAadhaar(result.parent.aadhaar)}</div>
+                  <div className="text-xs text-slate-500 dark:text-slate-400">  {t("doctorDashboard.parent")} • {maskAadhaar(result.parent.aadhaar)}
+</div>
                 </div>
               </div>
-              <h2 className="mt-8 text-lg font-display tracking-tight text-slate-800 dark:text-slate-200">Linked children</h2>
+              <h2 className="mt-8 text-lg font-display tracking-tight text-slate-800 dark:text-slate-200">
+  {t("doctorDashboard.linkedChildren")}
+</h2>
               {result.children.length === 0 ? (
-                <div className="card-soft p-8 mt-4 text-center text-slate-500 dark:text-slate-400">No children linked to this parent yet.</div>
+                <div className="card-soft p-8 mt-4 text-center text-slate-500 dark:text-slate-400">{t("doctorDashboard.noChildren")}</div>
               ) : (
                 <div className="grid md:grid-cols-2 gap-4 mt-4">
                   {result.children.map(c => {
                     const parentRole = c.mother_aadhaar === aadhaar ? "mother" : c.father_aadhaar === aadhaar ? "father" : null;
                     const parentName = result.parent?.full_name || "linked parent";
-                    return <ChildResultCard key={c.id} c={c} onOpen={() => nav(`/doctor/child/${c.id}`, { state: { parentRole, parentName } })} />;
+                    return <ChildResultCard
+  key={c.id}
+  c={c}
+  t={t}
+  onOpen={() => nav(`/doctor/child/${c.id}`, { state: { parentRole, parentName } })}
+/>;
                   })}
                 </div>
               )}
             </>
           ) : (
             <>
-              <h2 className="text-lg font-display tracking-tight text-slate-800 dark:text-slate-200">Child</h2>
+              <h2 className="text-lg font-display tracking-tight text-slate-800 dark:text-slate-200">
+  {t("doctorDashboard.child")}
+</h2>
               <div className="grid md:grid-cols-2 gap-4 mt-4">
-                {result.children.map(c => <ChildResultCard key={c.id} c={c} onOpen={() => nav(`/doctor/child/${c.id}`, { state: { parentRole: null, parentName: null } })} />)}
+                {result.children.map(c => (
+  <ChildResultCard
+    key={c.id}
+    c={c}
+    t={t}
+    onOpen={() => nav(`/doctor/child/${c.id}`, { state: { parentRole: null, parentName: null } })}
+  />
+))}
               </div>
             </>
           )}
@@ -101,7 +124,7 @@ export default function DoctorDashboard() {
   );
 }
 
-function ChildResultCard({ c, onOpen }) {
+function ChildResultCard({ c, onOpen, t }) {
   return (
     <button data-testid={`doc-child-result-${c.id}`} onClick={onOpen} className="card-soft hover-lift p-5 text-left w-full flex items-center gap-4">
       <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-teal-100 to-sky-100 text-teal-700 dark:text-teal-300 grid place-items-center">
@@ -109,8 +132,8 @@ function ChildResultCard({ c, onOpen }) {
       </div>
       <div className="flex-1 min-w-0">
         <div className="font-display text-lg text-slate-900 dark:text-slate-100 truncate">{c.name}</div>
-        <div className="text-xs text-slate-500 dark:text-slate-400">{c.gender} • {ageString(c.dob)}</div>
-      </div>
+        <div className="text-xs text-slate-500 dark:text-slate-400">{t(`gender.${c.gender.toLowerCase()}`)} • {ageString(c.dob)}</div>
+      </div>  
       <ArrowRight className="w-4 h-4 text-slate-400 dark:text-slate-500" />
     </button>
   );

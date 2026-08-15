@@ -1,20 +1,45 @@
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import AppShell from "@/components/AppShell";
 import { api } from "@/lib/api";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Bell, Syringe } from "lucide-react";
 
 export default function ParentNotifications() {
+  const { t, i18n } = useTranslation();
+
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  const localeMap = {
+    en: "en-IN",
+    hi: "hi-IN",
+    mr: "mr-IN",
+    gu: "gu-IN",
+  };
+
+  const currentLocale =
+    localeMap[i18n.language] || "en-IN";
 
   useEffect(() => {
     (async () => {
       try {
-        const { data } = await api.get("/parent/notifications");
+        const { data } = await api.get(
+          "/parent/notifications"
+        );
+
         setItems(data);
+
         // mark all as read
-        await Promise.all(data.filter(x => !x.read).map(x => api.post(`/parent/notifications/${x.id}/read`)));
+        await Promise.all(
+          data
+            .filter((x) => !x.read)
+            .map((x) =>
+              api.post(
+                `/parent/notifications/${x.id}/read`
+              )
+            )
+        );
       } finally {
         setLoading(false);
       }
@@ -22,34 +47,76 @@ export default function ParentNotifications() {
   }, []);
 
   return (
-    <AppShell showBack backTo="/parent/dashboard">
+    <AppShell
+      showBack
+      backTo="/parent/dashboard"
+    >
       <div className="flex items-center gap-3 mb-6">
         <div className="w-11 h-11 rounded-2xl bg-teal-50 dark:bg-teal-900/40 text-teal-700 dark:text-teal-300 grid place-items-center">
           <Bell className="w-5 h-5" />
         </div>
+
         <div>
-          <h1 className="text-3xl font-display tracking-tight text-slate-900 dark:text-slate-100">Notifications</h1>
-          <p className="text-slate-500 dark:text-slate-400 text-sm">Vaccination updates for your children.</p>
+          <h1 className="text-3xl font-display tracking-tight text-slate-900 dark:text-slate-100">
+            {t("parentNotifications.title")}
+          </h1>
+
+          <p className="text-slate-500 dark:text-slate-400 text-sm">
+            {t("parentNotifications.description")}
+          </p>
         </div>
       </div>
 
       {loading ? (
-        <div className="space-y-3">{[0,1,2].map(i => <Skeleton key={i} className="h-20 rounded-2xl" />)}</div>
+        <div className="space-y-3">
+          {[0, 1, 2].map((i) => (
+            <Skeleton
+              key={i}
+              className="h-20 rounded-2xl"
+            />
+          ))}
+        </div>
       ) : items.length === 0 ? (
-        <div className="card-soft p-10 text-center text-slate-500 dark:text-slate-400">No notifications yet.</div>
+        <div className="card-soft p-10 text-center text-slate-500 dark:text-slate-400">
+          {t("parentNotifications.noNotifications")}
+        </div>
       ) : (
         <div className="space-y-3">
-          {items.map(n => (
-            <div key={n.id} data-testid={`notif-${n.id}`} className={`card-soft p-4 flex items-start gap-4 ${n.read ? "" : "border-teal-300"}`}>
+          {items.map((n) => (
+            <div
+              key={n.id}
+              data-testid={`notif-${n.id}`}
+              className={`card-soft p-4 flex items-start gap-4 ${
+                n.read
+                  ? ""
+                  : "border-teal-300"
+              }`}
+            >
               <div className="w-10 h-10 rounded-xl bg-teal-50 dark:bg-teal-900/40 text-teal-700 dark:text-teal-300 grid place-items-center shrink-0">
                 <Syringe className="w-5 h-5" />
               </div>
+
               <div className="flex-1 min-w-0">
-                <div className="font-semibold text-slate-900 dark:text-slate-100">{n.title}</div>
-                <div className="text-sm text-slate-600 dark:text-slate-400 mt-0.5">{n.body}</div>
-                <div className="text-xs text-slate-400 dark:text-slate-500 mt-1">{new Date(n.created_at).toLocaleString("en-IN")}</div>
+                <div className="font-semibold text-slate-900 dark:text-slate-100">
+                  {n.title}
+                </div>
+
+                <div className="text-sm text-slate-600 dark:text-slate-400 mt-0.5">
+                  {n.body}
+                </div>
+
+                <div className="text-xs text-slate-400 dark:text-slate-500 mt-1">
+                  {new Date(
+                    n.created_at
+                  ).toLocaleString(
+                    currentLocale
+                  )}
+                </div>
               </div>
-              {!n.read && <span className="w-2.5 h-2.5 rounded-full bg-teal-500 mt-2" />}
+
+              {!n.read && (
+                <span className="w-2.5 h-2.5 rounded-full bg-teal-500 mt-2" />
+              )}
             </div>
           ))}
         </div>

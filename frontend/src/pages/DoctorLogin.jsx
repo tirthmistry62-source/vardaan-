@@ -8,8 +8,11 @@ import { api, setSession } from "@/lib/api";
 import { Loader2, Stethoscope, ArrowLeft } from "lucide-react";
 import ThemeToggle from "@/components/ThemeToggle";
 import { useTheme } from "@/lib/theme";
+import { useTranslation } from "react-i18next";
+import LanguageSelector from "@/components/LanguageSelector";
 
 export default function DoctorLogin() {
+  const { t } = useTranslation();
   const nav = useNavigate();
   const { theme } = useTheme();
   const isDark = theme === "dark";
@@ -23,10 +26,16 @@ export default function DoctorLogin() {
     try {
       const { data } = await api.post("/doctor/login", { phone, password });
       setSession({ token: data.token, role: "doctor", user: data.doctor });
-      toast.success(`Welcome, Dr. ${data.doctor.doctor_name.split(" ")[0]}`);
+      toast.success(
+  t("doctorLogin.welcome", {
+    name: data.doctor.doctor_name.split(" ")[0],
+  })
+);
       nav("/doctor/dashboard", { replace: true });
     } catch (err) {
-      toast.error(err?.response?.data?.detail || "Login failed");
+      toast.error(
+  err?.response?.data?.detail || t("doctorLogin.loginFailed")
+);
     } finally {
       setLoading(false);
     }
@@ -36,34 +45,41 @@ export default function DoctorLogin() {
     <>
       {/* Mobile layout */}
       <div className="min-h-screen aurora-bg md:hidden">
-        <ThemeToggle floating />
+        <div className="fixed top-4 right-4 z-50 flex items-center gap-1">
+  <LanguageSelector />
+  <ThemeToggle />
+</div>
         <div className="flex items-center justify-center p-6 min-h-screen">
           <form onSubmit={submit} className="w-full max-w-md card-soft p-8">
             <Link to="/select-role" data-testid="back-to-roles" className="inline-flex items-center gap-2 text-sm text-slate-500 hover:text-slate-700 dark:hover:text-slate-200 dark:text-slate-300 mb-6">
-              <ArrowLeft className="w-4 h-4" /> Back to role selection
+              <ArrowLeft className="w-4 h-4" /> {t("doctorLogin.backToRoleSelection")}
             </Link>
-            <h1 className="text-3xl font-display tracking-tight text-slate-900 dark:text-slate-100">Doctor Login</h1>
-            <p className="mt-2 text-slate-500 dark:text-slate-400 text-sm">Sign in to access patient records.</p>
-            <div className="mt-8 space-y-5">
+            <h1 className="text-3xl font-display tracking-tight text-slate-900 dark:text-slate-100">{t("doctorLogin.title")}</h1>
+            <p className="mt-2 text-slate-500 dark:text-slate-400 text-sm leading-6">{t("doctorLogin.description")}</p>
+            <div className="mt-8 space-y-6">
               <div>
-                <Label className="text-slate-700 dark:text-slate-300">Phone number</Label>
+                <Label className="text-slate-700 dark:text-slate-300">
+  {t("doctorLogin.phoneNumber")}
+</Label>
                 <Input
                   data-testid="doc-login-phone"
                   inputMode="numeric"
                   value={phone}
                   onChange={(e) => setPhone(e.target.value.replace(/\D/g, "").slice(0, 15))}
-                  placeholder="Registered phone"
+                  placeholder={t("doctorLogin.phonePlaceholder")}
                   className="mt-2 h-12 rounded-xl"
                 />
               </div>
               <div>
-                <Label className="text-slate-700 dark:text-slate-300">Password</Label>
+                <Label className="text-slate-700 dark:text-slate-300">
+  {t("doctorLogin.password")}
+</Label>
                 <Input
                   data-testid="doc-login-password"
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Enter password"
+                  placeholder={t("doctorLogin.passwordPlaceholder")}
                   className="mt-2 h-12 rounded-xl"
                 />
               </div>
@@ -74,10 +90,10 @@ export default function DoctorLogin() {
               disabled={loading}
               className="mt-8 w-full h-12 rounded-full bg-sky-700 hover:bg-sky-800 text-white"
             >
-              {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Sign in"}
+              {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : t("doctorLogin.signIn")}
             </Button>
             <div className="mt-6 flex items-center justify-between text-sm">
-              <Link data-testid="doc-register-link" to="/doctor/register" className="text-sky-700 dark:text-sky-300 font-medium hover:underline">Create doctor account</Link>
+              <Link data-testid="doc-register-link" to="/doctor/register" className="text-sky-700 dark:text-sky-300 font-medium hover:underline">{t("doctorLogin.createAccount")}</Link>
             </div>
           </form>
         </div>
@@ -86,7 +102,10 @@ export default function DoctorLogin() {
       {/* Desktop layout */}
       <div className="hidden md:flex min-h-screen items-center justify-center transition-colors duration-300"
         style={{ background: isDark ? '#080d19' : '#f1f5f9' }}>
-        <ThemeToggle floating />
+        <div className="fixed top-4 right-4 z-50 flex items-center gap-1">
+  <LanguageSelector />
+  <ThemeToggle />
+</div>
         <div className="flex w-[calc(100vw-80px)] max-w-[1100px] rounded-[2rem] overflow-hidden shadow-2xl transition-colors duration-300"
           style={{ background: isDark ? '#0f1620' : '#ffffff', height: 'calc(100vh - 140px)', maxHeight: '620px' }}>
 
@@ -114,16 +133,16 @@ export default function DoctorLogin() {
                 <Stethoscope className="w-6 h-6 text-white" strokeWidth={1.75} />
               </div>
               <h2 className="mt-6 text-[2.25rem] font-display font-semibold tracking-tight leading-[1.15]" style={{ color: '#fff' }}>
-                A lifelong vaccination record — always in your pocket.
+                {t("doctorLogin.panelTitle")}
               </h2>
-              <p className="mt-4 text-sm leading-relaxed max-w-[300px]" style={{ color: '#93c5fd' }}>
-                Search by Aadhaar. See what's due. Tap to record. Every parent gets an instant notification.
+              <p className="mt-4 text-sm leading-7 max-w-[300px]" style={{ color: '#93c5fd' }}>
+                {t("doctorLogin.panelDescription")}
               </p>
               <div className="mt-2 text-sm" style={{ color: '#60a5fa' }}>© Vardaan+ 2026</div>
               <div className="flex-1 flex items-end justify-center mt-3">
                 <img
                   src="/doctor-illustration.png"
-                  alt="Doctor illustration"
+                  alt={t("doctorLogin.doctorIllustrationAlt")}
                   className="max-w-[260px] h-auto object-contain drop-shadow-xl rounded-3xl"
                 />
               </div>
@@ -135,22 +154,24 @@ export default function DoctorLogin() {
             <form onSubmit={submit} className="w-full max-w-[380px]">
               <Link to="/select-role" data-testid="back-to-roles" className="inline-flex items-center gap-2 text-sm mb-8 transition-colors"
                 style={{ color: isDark ? '#94a3b8' : '#64748b' }}>
-                <ArrowLeft className="w-4 h-4" /> Back to role selection
+                <ArrowLeft className="w-4 h-4" /> {t("doctorLogin.backToRoleSelection")}
               </Link>
               <h1 className="text-3xl font-display tracking-tight font-semibold"
-                style={{ color: isDark ? '#fff' : '#0f172a' }}>Doctor Login</h1>
-              <p className="mt-2 text-sm"
-                style={{ color: isDark ? '#64748b' : '#94a3b8' }}>Sign in with your credentials to access patient vaccination records.</p>
+                style={{ color: isDark ? '#fff' : '#0f172a' }}>{t("doctorLogin.title")}</h1>
+              <p className="mt-2 text-sm leading-6"
+                style={{ color: isDark ? '#64748b' : '#94a3b8' }}>{t("doctorLogin.desktopDescription")}</p>
 
               <div className="mt-8 space-y-5">
                 <div>
-                  <Label style={{ color: isDark ? '#cbd5e1' : '#334155' }}>Phone number</Label>
+                  <Label style={{ color: isDark ? '#cbd5e1' : '#334155' }}>
+  {t("doctorLogin.phoneNumber")}
+</Label>
                   <Input
                     data-testid="doc-login-phone"
                     inputMode="numeric"
                     value={phone}
                     onChange={(e) => setPhone(e.target.value.replace(/\D/g, "").slice(0, 15))}
-                    placeholder="Registered phone"
+                    placeholder={t("doctorLogin.phonePlaceholder")}
                     className="mt-2 h-12 rounded-xl"
                     style={{
                       background: isDark ? '#0a0f1a' : '#f8fafc',
@@ -160,13 +181,15 @@ export default function DoctorLogin() {
                   />
                 </div>
                 <div>
-                  <Label style={{ color: isDark ? '#cbd5e1' : '#334155' }}>Password</Label>
+                  <Label style={{ color: isDark ? '#cbd5e1' : '#334155' }}>
+  {t("doctorLogin.password")}
+</Label>
                   <Input
                     data-testid="doc-login-password"
                     type="password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    placeholder="Enter your password"
+                    placeholder={t("doctorLogin.passwordPlaceholder")}
                     className="mt-2 h-12 rounded-xl"
                     style={{
                       background: isDark ? '#0a0f1a' : '#f8fafc',
@@ -184,11 +207,11 @@ export default function DoctorLogin() {
                 className="mt-8 w-full h-12 rounded-full text-white text-base font-medium"
                 style={{ background: '#2563eb' }}
               >
-                {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Sign in"}
+                {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : t("doctorLogin.signIn")}
               </Button>
 
               <div className="mt-6 flex items-center justify-between text-sm">
-                <Link data-testid="doc-register-link" to="/doctor/register" className="font-medium transition-colors" style={{ color: '#60a5fa' }}>Create doctor account</Link>
+                <Link data-testid="doc-register-link" to="/doctor/register" className="font-medium transition-colors" style={{ color: '#60a5fa' }}>{t("doctorLogin.createAccount")}</Link>
               </div>
             </form>
           </div>

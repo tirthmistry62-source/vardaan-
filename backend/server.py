@@ -168,12 +168,23 @@ class VaccinationRecordIn(BaseModel):
     entries: List[dict]
     access_code: Optional[str] = None
 
+class ParentVaccinationRecordIn(BaseModel):
+    child_id: str
+    vaccine_code: str
+    vaccine_name: str
+    dose: str
+    date_given: str
+    weight_kg: Optional[float] = None
+    doctor_name: Optional[str] = None
+    remarks: Optional[str] = None
+
 class DoctorAccessCodeIn(BaseModel):
     access_code: str
 
 class ParentUpdateIn(BaseModel):
     full_name: Optional[str] = None
     phone: Optional[str] = None
+    language: Optional[str] = None
 
 class DoctorUpdateIn(BaseModel):
     doctor_name: Optional[str] = None
@@ -181,6 +192,7 @@ class DoctorUpdateIn(BaseModel):
     clinic_name: Optional[str] = None
     clinic_address: Optional[str] = None
     profile_photo_url: Optional[str] = None
+    language: Optional[str] = None
 
 class ChildUpdateIn(BaseModel):
     name: Optional[str] = None
@@ -304,6 +316,121 @@ UIP_SCHEDULE = {
     "Varicella": [12],  # Chickenpox vaccine
     "JE": [9, 16],  # Japanese Encephalitis
     "MMR": [18],  # Measles, Mumps, Rubella
+}
+
+PARENT_VACCINE_SCHEDULE = {
+    "BCG": {
+        "name": "BCG",
+        "dose": "Single",
+    },
+    "OPV-0": {
+        "name": "OPV",
+        "dose": "Dose 0",
+    },
+    "HepB-Birth": {
+        "name": "Hepatitis B",
+        "dose": "Birth",
+    },
+    "OPV-1": {
+        "name": "OPV",
+        "dose": "Dose 1",
+    },
+    "Penta-1": {
+        "name": "Pentavalent",
+        "dose": "Dose 1",
+    },
+    "Rota-1": {
+        "name": "Rotavirus",
+        "dose": "Dose 1",
+    },
+    "IPV-1": {
+        "name": "IPV",
+        "dose": "Dose 1",
+    },
+    "PCV-1": {
+        "name": "PCV",
+        "dose": "Dose 1",
+    },
+    "OPV-2": {
+        "name": "OPV",
+        "dose": "Dose 2",
+    },
+    "Penta-2": {
+        "name": "Pentavalent",
+        "dose": "Dose 2",
+    },
+    "Rota-2": {
+        "name": "Rotavirus",
+        "dose": "Dose 2",
+    },
+    "OPV-3": {
+        "name": "OPV",
+        "dose": "Dose 3",
+    },
+    "Penta-3": {
+        "name": "Pentavalent",
+        "dose": "Dose 3",
+    },
+    "Rota-3": {
+        "name": "Rotavirus",
+        "dose": "Dose 3",
+    },
+    "IPV-2": {
+        "name": "IPV",
+        "dose": "Dose 2",
+    },
+    "PCV-2": {
+        "name": "PCV",
+        "dose": "Dose 2",
+    },
+    "MR-1": {
+        "name": "Measles-Rubella",
+        "dose": "Dose 1",
+    },
+    "PCV-B": {
+        "name": "PCV",
+        "dose": "Booster",
+    },
+    "VitA-1": {
+        "name": "Vitamin A",
+        "dose": "Dose 1",
+    },
+    "JE-1": {
+        "name": "JE",
+        "dose": "Dose 1",
+    },
+    "DPT-B1": {
+        "name": "DPT",
+        "dose": "Booster 1",
+    },
+    "OPV-B": {
+        "name": "OPV",
+        "dose": "Booster",
+    },
+    "MR-2": {
+        "name": "Measles-Rubella",
+        "dose": "Dose 2",
+    },
+    "VitA-2": {
+        "name": "Vitamin A",
+        "dose": "Dose 2",
+    },
+    "JE-2": {
+        "name": "JE",
+        "dose": "Dose 2",
+    },
+    "DPT-B2": {
+        "name": "DPT",
+        "dose": "Booster 2",
+    },
+    "Td-10": {
+        "name": "Td",
+        "dose": "10 years",
+    },
+    "Td-16": {
+        "name": "Td",
+        "dose": "16 years",
+    },
 }
 
 def get_vaccine_due_dates(child_dob: str) -> List[dict]:
@@ -589,6 +716,10 @@ async def doctor_update(body: DoctorUpdateIn, cur=Depends(require_doctor)):
         updates['clinic_address'] = body.clinic_address.strip()
     if body.profile_photo_url is not None:
         updates['profile_photo_url'] = body.profile_photo_url or None
+    if body.language is not None:
+        if body.language not in ("en", "hi", "mr", "gu"):
+            raise HTTPException(400, "Unsupported language")
+        updates['language'] = body.language
     if not updates:
         raise HTTPException(400, "Nothing to update")
     await sb_update('doctors', eq('id', cur['user_id']), updates)
@@ -620,6 +751,12 @@ async def parent_update(body: ParentUpdateIn, cur=Depends(require_parent)):
         if other:
             raise HTTPException(409, "Phone already registered")
         updates['phone'] = body.phone
+
+    if body.language is not None:
+        if body.language not in ("en", "hi", "mr", "gu"):
+            raise HTTPException(400, "Unsupported language")
+        updates['language'] = body.language
+
     if not updates:
         raise HTTPException(400, "Nothing to update")
     await sb_update('parents', eq('id', cur['user_id']), updates)
@@ -883,6 +1020,128 @@ async def record_vaccinations(body: VaccinationRecordIn, cur=Depends(require_doc
 
     return {'created': created}
 
+@api.post('/parent/vaccinations')
+async def parent_record_vaccination(
+    body: ParentVaccinationRecordIn,
+    cur=Depends(require_parent)
+):
+    # Verify that this parent actually owns the child.
+    parent, child = await _assert_parent_owns_child(
+        cur['user_id'],
+        body.child_id
+    )
+
+    # Verify that the vaccine code exists in the exact
+    # schedule used by the frontend.
+    expected = PARENT_VACCINE_SCHEDULE.get(body.vaccine_code)
+
+    if not expected:
+        raise HTTPException(
+            400,
+            "Invalid vaccine code"
+        )
+
+    # Prevent the client from changing the vaccine name/dose
+    # while keeping a valid vaccine code.
+    if body.vaccine_name != expected["name"]:
+        raise HTTPException(
+            400,
+            "Vaccine name does not match vaccine code"
+        )
+
+    if body.dose != expected["dose"]:
+        raise HTTPException(
+            400,
+            "Vaccine dose does not match vaccine code"
+        )
+
+    # Validate the vaccination date.
+    try:
+        date_given = datetime.strptime(
+            body.date_given,
+            "%Y-%m-%d"
+        ).date()
+    except ValueError:
+        raise HTTPException(
+            400,
+            "Invalid vaccination date"
+        )
+
+    if date_given > date.today():
+        raise HTTPException(
+            400,
+            "Vaccination date cannot be in the future"
+        )
+
+    # Validate weight when supplied.
+    weight = None
+
+    if body.weight_kg is not None:
+        if (
+            body.weight_kg <= 0
+            or body.weight_kg > 200
+        ):
+            raise HTTPException(
+                400,
+                "Enter a valid weight in kg"
+            )
+
+        weight = round(
+            float(body.weight_kg),
+            2
+        )
+
+    # Prevent duplicate vaccination records
+    # for the same child + vaccine code + dose.
+    existing = await sb_find_one(
+        'vaccinations',
+        f"{eq('child_id', body.child_id)}&"
+        f"{eq('vaccine_code', body.vaccine_code)}&"
+        f"{eq('dose', body.dose)}"
+    )
+
+    if existing:
+        raise HTTPException(
+            409,
+            "This vaccination dose has already been recorded"
+        )
+
+    vaccination = {
+        'id': str(uuid.uuid4()),
+        'child_id': body.child_id,
+        'vaccine_code': body.vaccine_code,
+        'vaccine_name': body.vaccine_name,
+        'dose': body.dose,
+        'date_given': body.date_given,
+        'weight_kg': weight,
+        'doctor_id': None,
+        'doctor_name': (
+            body.doctor_name.strip()
+            if body.doctor_name
+            and body.doctor_name.strip()
+            else None
+        ),
+        'doctor_phone': None,
+        'clinic_name': None,
+        'clinic_address': None,
+        'remarks': (
+            body.remarks.strip()
+            if body.remarks
+            and body.remarks.strip()
+            else None
+        ),
+        'is_historical': True,
+        'created_at': now_iso(),
+    }
+
+    created = await sb_insert(
+        'vaccinations',
+        vaccination
+    )
+
+    return {
+        'created': created
+    }
 @api.post('/admin/check-vaccination-reminders')
 async def trigger_vaccination_reminders():
     """

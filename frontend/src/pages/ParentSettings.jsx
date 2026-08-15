@@ -7,13 +7,22 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { User2, Trash2, ShieldAlert, Loader2 } from "lucide-react";
 import { maskAadhaar } from "@/lib/vaccineStatus";
+import {
+  User2,
+  Trash2,
+  ShieldAlert,
+  Loader2,
+  LogOut,
+  Languages,
+} from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 const DELETE_PHRASE = "DELETE MY ACCOUNT";
 
 export default function ParentSettings() {
   const nav = useNavigate();
+  const { t, i18n } = useTranslation();
   const session = getSession();
   const [me, setMe] = useState(null);
   const [full_name, setFullName] = useState("");
@@ -77,55 +86,130 @@ export default function ParentSettings() {
 
   return (
     <AppShell showBack backTo="/parent/dashboard">
+
+      
+
       <div className="max-w-xl">
         <div className="flex items-center gap-3 mb-6">
           <div className="w-12 h-12 rounded-2xl bg-teal-50 dark:bg-teal-900/40 text-teal-700 dark:text-teal-300 grid place-items-center">
             <User2 className="w-6 h-6" strokeWidth={1.5} />
           </div>
           <div>
-            <h1 className="text-3xl font-display tracking-tight text-slate-900 dark:text-slate-100">Profile & Settings</h1>
+            <h1 className="text-3xl font-display tracking-tight text-slate-900 dark:text-slate-100">{t("profileSettings")}</h1>
             <p className="text-slate-500 dark:text-slate-400 text-sm">Aadhaar: {maskAadhaar(me.aadhaar)}</p>
-            {me.access_code && <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Access code: <span className="font-semibold text-slate-700 dark:text-slate-200">{me.access_code}</span></p>}
+            {me.access_code && <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">{t("accessCode")}: <span className="font-semibold text-slate-700 dark:text-slate-200">{me.access_code}</span></p>}
           </div>
         </div>
 
         <form onSubmit={save} className="card-soft p-6 grid gap-5">
-          <h2 className="font-display text-lg text-slate-900 dark:text-slate-100">Account details</h2>
+          <h2 className="font-display text-lg text-slate-900 dark:text-slate-100">{t("accountDetails")}</h2>
           <div>
-            <Label>Full name</Label>
+            <Label>{t("fullName")}</Label>
             <Input data-testid="settings-name" value={full_name} onChange={(e) => setFullName(e.target.value)} className="mt-2 h-12 rounded-xl" />
           </div>
           <div>
-            <Label>Phone number</Label>
+            <Label>{t("phoneNumber")}</Label>
             <Input data-testid="settings-phone" inputMode="numeric" value={phone}
               onChange={(e) => setPhone(e.target.value.replace(/\D/g, "").slice(0, 15))}
               className="mt-2 h-12 rounded-xl" />
           </div>
           <div>
-            <Label>Aadhaar (username)</Label>
+            <Label>{t("aadhaarUsername")}</Label>
             <Input value={me.aadhaar} disabled className="mt-2 h-12 rounded-xl bg-slate-50 dark:bg-slate-800" />
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1.5">Aadhaar cannot be changed. It is your permanent identifier.</p>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1.5">{t("aadhaarDescription")}</p>
           </div>
           <Button data-testid="settings-save" type="submit" disabled={saving} className="h-12 rounded-full bg-teal-700 hover:bg-teal-800 text-white">
-            {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : "Save changes"}
+            {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : t("saveChanges")}
           </Button>
         </form>
 
-        <div className="card-soft p-6 mt-8 border-rose-200 dark:border-rose-900/60">
-          <div className="flex items-start gap-3">
-            <div className="w-10 h-10 rounded-xl bg-rose-50 dark:bg-rose-900/40 text-rose-600 dark:text-rose-300 grid place-items-center shrink-0">
-              <ShieldAlert className="w-5 h-5" />
-            </div>
-            <div className="flex-1">
-              <h2 className="font-display text-lg text-slate-900 dark:text-slate-100">Danger zone</h2>
-              <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Delete your account permanently. If a child is linked to you and another parent, that child will remain accessible to the other parent.</p>
-              <Button data-testid="delete-account-btn" onClick={() => setWarnOpen(true)} variant="destructive" className="mt-4 rounded-full gap-2">
-                <Trash2 className="w-4 h-4" /> Delete my account
-              </Button>
-            </div>
-          </div>
-        </div>
-      </div>
+        <div className="card-soft p-6 mt-8">
+  <div className="flex items-center gap-3">
+  <div className="w-10 h-10 rounded-xl bg-teal-50 dark:bg-teal-900/40 text-teal-700 dark:text-teal-300 grid place-items-center">
+    <Languages className="w-5 h-5" />
+  </div>
+
+  <div>
+    <h2 className="font-display text-lg text-slate-900 dark:text-slate-100">
+      {t("language")}
+    </h2>
+    <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">
+      {t("parentDashboard.languageDescription")}
+    </p>
+  </div>
+</div>
+
+  <select
+  value={i18n.language}
+  onChange={async (e) => {
+    const language = e.target.value;
+    await i18n.changeLanguage(language);
+
+    try {
+      await api.patch("/parent/me", { language });
+    } catch (err) {
+      console.error("Failed to save language preference:", err);
+    }
+  }}
+  className="mt-5 w-full h-12 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-4 text-slate-900 dark:text-slate-100 text-sm font-medium outline-none transition-colors focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20"
+>
+    <option value="en">{t("english")}</option>
+    <option value="hi">{t("hindi")}</option>
+    <option value="mr">{t("marathi")}</option>
+    <option value="gu">{t("gujarati")}</option>
+  </select>
+</div>
+
+        <div className="card-soft p-6 mt-8">
+  <h2 className="font-display text-lg text-slate-900 dark:text-slate-100">
+    {t("session")}
+  </h2>
+
+  <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+    {t("signOutDescription")}
+  </p>
+
+  <Button
+    onClick={() => {
+      clearSession();
+      nav("/select-role", { replace: true });
+    }}
+    variant="outline"
+    className="mt-4 rounded-full gap-2"
+  >
+    <LogOut className="w-4 h-4" />
+    Logout
+  </Button>
+</div>
+
+<div className="card-soft p-5 mt-8 !border !border-red-500 rounded-3xl">
+    <div className="flex items-start gap-3">
+    <div className="w-11 h-11 rounded-xl bg-rose-900/50 text-rose-300 grid place-items-center shrink-0">
+      <ShieldAlert className="w-5 h-5" />
+    </div>
+
+    <div className="flex-1 min-w-0">
+      <h2 className="font-display text-xl font-semibold text-slate-100">
+        {t("dangerZone")}
+      </h2>
+
+      <p className="text-sm leading-6 text-slate-300 mt-1.5 max-w-md">
+        {t("deleteAccountDescription")}
+      </p>
+
+      <Button
+        data-testid="delete-account-btn"
+        onClick={() => setWarnOpen(true)}
+        variant="destructive"
+        className="mt-5 rounded-full gap-2 px-6 h-12 text-base font-semibold"
+      >
+        <Trash2 className="w-5 h-5" />
+        {t("deleteAccount")}
+      </Button>
+    </div>
+  </div>
+</div>
+</div>
 
       {/* Warning dialog */}
       <Dialog open={warnOpen} onOpenChange={setWarnOpen}>

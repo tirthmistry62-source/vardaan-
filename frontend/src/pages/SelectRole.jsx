@@ -1,69 +1,158 @@
 import { Link } from "react-router-dom";
-import { HeartPulse, Stethoscope, ArrowRight, ShieldCheck } from "lucide-react";
+import {
+  HeartPulse,
+  Stethoscope,
+  ArrowRight,
+  ShieldCheck,
+  Languages,
+} from "lucide-react";
 import ThemeToggle from "@/components/ThemeToggle";
+import { useTranslation } from "react-i18next";
+import { Button } from "@/components/ui/button";
 
 export default function SelectRole() {
+  const { i18n, t } = useTranslation();
+
+  const changeLanguage = async (language) => {
+    await i18n.changeLanguage(language);
+  };
+
   return (
-    <div className="min-h-screen aurora-bg px-6 py-10">
+    <div className="min-h-screen aurora-bg px-6 sm:px-8 py-10 sm:py-12">
       <div className="max-w-5xl mx-auto">
-        <div className="flex items-center justify-between gap-3">
-          <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400 text-sm">
-            <ShieldCheck className="w-4 h-4 text-teal-700 dark:text-teal-300" />
-            <span>Secured with password-based authentication</span>
+        {/* Top bar */}
+        <div className="flex items-center justify-between gap-4">
+          <div className="flex items-start gap-2 text-slate-500 dark:text-slate-400 text-sm leading-relaxed max-w-[280px] sm:max-w-none">
+            <ShieldCheck className="w-4 h-4 text-teal-700 dark:text-teal-300 shrink-0 mt-0.5" />
+            <span>{t("selectRole.securityMessage")}</span>
           </div>
-          <ThemeToggle />
+
+          <div className="flex items-center gap-2 shrink-0">
+            {/* Language selector */}
+            <div className="relative group">
+              <Button
+                variant="ghost"
+                className="rounded-full h-11 px-4 gap-2 border border-slate-300 dark:border-slate-600 bg-transparent hover:bg-slate-100 dark:hover:bg-slate-800"
+                aria-label={t("language")}
+              >
+                <Languages className="w-5 h-5" />
+                <span className="text-sm font-medium">
+                  {t("language")}
+                </span>
+              </Button>
+
+              <div className="absolute right-0 top-12 hidden group-hover:block z-50">
+                <div className="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-lg p-1 min-w-[130px]">
+                  <button
+                    type="button"
+                    onClick={() => changeLanguage("en")}
+                    className="w-full text-left px-3 py-2 rounded-lg text-sm hover:bg-slate-100 dark:hover:bg-slate-700"
+                  >
+                    {t("english")}
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => changeLanguage("hi")}
+                    className="w-full text-left px-3 py-2 rounded-lg text-sm hover:bg-slate-100 dark:hover:bg-slate-700"
+                  >
+                    {t("hindi")}
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => changeLanguage("mr")}
+                    className="w-full text-left px-3 py-2 rounded-lg text-sm hover:bg-slate-100 dark:hover:bg-slate-700"
+                  >
+                    {t("marathi")}
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => changeLanguage("gu")}
+                    className="w-full text-left px-3 py-2 rounded-lg text-sm hover:bg-slate-100 dark:hover:bg-slate-700"
+                  >
+                    {t("gujarati")}
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <ThemeToggle />
+          </div>
         </div>
-        <h1 className="mt-4 text-4xl sm:text-5xl font-display tracking-tight text-slate-900 dark:text-slate-100 max-w-2xl">
-          Who are you signing in as?
+
+        {/* Main heading */}
+        <h1 className="mt-7 sm:mt-8 text-4xl sm:text-5xl font-display tracking-tight leading-[1.15] text-slate-900 dark:text-slate-100 max-w-2xl">
+          {t("selectRole.title")}
         </h1>
-        <p className="mt-3 text-slate-600 dark:text-slate-400 max-w-xl">
-          Choose your role to continue. Parents manage children and view vaccination history. Doctors update records after searching an Aadhaar.
+
+        <p className="mt-5 text-slate-600 dark:text-slate-400 max-w-2xl leading-7">
+          {t("selectRole.description")}
         </p>
 
-        <div className="grid md:grid-cols-2 gap-6 mt-10">
+        {/* Role cards */}
+        <div className="grid md:grid-cols-2 gap-6 lg:gap-8 mt-12">
+          {/* Parent */}
           <Link
             to="/parent/login"
             data-testid="role-parent-card"
-            className="group card-soft hover-lift tap-scale p-8 block relative overflow-hidden"
+            className="group card-soft hover-lift tap-scale p-8 sm:p-9 block relative overflow-hidden"
           >
             <div className="absolute -top-8 -right-8 w-40 h-40 rounded-full bg-teal-100/60 blur-2xl" />
+
             <div className="relative">
               <div className="w-14 h-14 rounded-2xl bg-teal-700 text-white grid place-items-center">
                 <HeartPulse className="w-7 h-7" strokeWidth={1.5} />
               </div>
-              <h2 className="mt-6 text-2xl font-display tracking-tight text-slate-900 dark:text-slate-100">Continue as Parent</h2>
-              <p className="mt-2 text-slate-600 dark:text-slate-400 text-sm leading-relaxed">
-                Register your children, follow the UIP schedule, and access a lifelong vaccination record.
+
+              <h2 className="mt-7 text-2xl font-display tracking-tight leading-snug text-slate-900 dark:text-slate-100">
+                {t("selectRole.parentTitle")}
+              </h2>
+
+              <p className="mt-3 text-slate-600 dark:text-slate-400 text-sm leading-7 max-w-md">
+                {t("selectRole.parentDescription")}
               </p>
-              <div className="mt-6 inline-flex items-center gap-2 text-teal-700 dark:text-teal-300 font-medium">
-                Get started <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
+
+              <div className="mt-7 inline-flex items-center gap-2 text-teal-700 dark:text-teal-300 font-medium">
+                {t("selectRole.getStarted")}
+                <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1 shrink-0" />
               </div>
             </div>
           </Link>
 
+          {/* Doctor */}
           <Link
             to="/doctor/login"
             data-testid="role-doctor-card"
-            className="group card-soft hover-lift tap-scale p-8 block relative overflow-hidden"
+            className="group card-soft hover-lift tap-scale p-8 sm:p-9 block relative overflow-hidden"
           >
             <div className="absolute -top-8 -right-8 w-40 h-40 rounded-full bg-sky-100/60 blur-2xl" />
+
             <div className="relative">
               <div className="w-14 h-14 rounded-2xl bg-sky-600 text-white grid place-items-center">
                 <Stethoscope className="w-7 h-7" strokeWidth={1.5} />
               </div>
-              <h2 className="mt-6 text-2xl font-display tracking-tight text-slate-900 dark:text-slate-100">Continue as Doctor</h2>
-              <p className="mt-2 text-slate-600 dark:text-slate-400 text-sm leading-relaxed">
-                Search a child by Aadhaar, view due vaccines, and record vaccinations in seconds.
+
+              <h2 className="mt-7 text-2xl font-display tracking-tight leading-snug text-slate-900 dark:text-slate-100">
+                {t("selectRole.doctorTitle")}
+              </h2>
+
+              <p className="mt-3 text-slate-600 dark:text-slate-400 text-sm leading-7 max-w-md">
+                {t("selectRole.doctorDescription")}
               </p>
-              <div className="mt-6 inline-flex items-center gap-2 text-sky-700 dark:text-sky-300 font-medium">
-                Get started <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
+
+              <div className="mt-7 inline-flex items-center gap-2 text-sky-700 dark:text-sky-300 font-medium">
+                {t("selectRole.getStarted")}
+                <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1 shrink-0" />
               </div>
             </div>
           </Link>
         </div>
 
-        <p className="mt-10 text-center text-slate-400 dark:text-slate-500 text-xs">
-          Medical records require an internet connection.
+        {/* Footer note */}
+        <p className="mt-12 text-center text-slate-400 dark:text-slate-500 text-xs leading-relaxed">
+          {t("selectRole.internetRequired")}
         </p>
       </div>
     </div>

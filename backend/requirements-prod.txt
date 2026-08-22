@@ -8,3 +8,4 @@ python-dateutil==2.9.0.post0
 python-multipart==0.0.32
 starlette==0.37.2
 pydantic==2.13.4
+firebase-admin

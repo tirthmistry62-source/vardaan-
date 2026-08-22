@@ -2,6 +2,7 @@
 import re
 
 from fastapi import FastAPI, APIRouter, HTTPException, Depends, Header, UploadFile, File
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
 from starlette.responses import FileResponse
@@ -1480,7 +1481,10 @@ async def trigger_vaccination_reminders():
     return result
 
 @api.post('/parent/test-push')
-async def test_push_notification(cur=Depends(require_parent)):
+async def test_push_notification(
+    authorization: str = Header(...),
+    cur=Depends(require_parent)
+):
     device_tokens = await sb_select(
         'device_tokens',
         'select=parent_id&is_active=eq.true&limit=1'

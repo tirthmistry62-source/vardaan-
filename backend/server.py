@@ -1480,7 +1480,7 @@ async def trigger_vaccination_reminders():
     return result
 
 @api.post('/parent/test-push')
-async def test_push_notification():
+async def test_push_notification(cur=Depends(require_parent)):
     device_tokens = await sb_select(
         'device_tokens',
         'select=parent_id&is_active=eq.true&limit=1'
@@ -1489,7 +1489,7 @@ async def test_push_notification():
     if not device_tokens:
         raise HTTPException(404, "No registered device found")
 
-    parent_id = device_tokens[0]['parent_id']
+    parent_id = cur['user_id']
 
     sent = await send_push_notification(
         parent_id,

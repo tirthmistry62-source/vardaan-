@@ -1,5 +1,5 @@
 import { initializeApp } from 'firebase/app';
-import { getMessaging, getToken, onMessage } from 'firebase/messaging';
+import { FirebaseMessaging } from '@capacitor-firebase/messaging';
 
 // Firebase configuration - UPDATE WITH YOUR VALUES FROM FIREBASE CONSOLE
 const firebaseConfig = {
@@ -18,7 +18,6 @@ console.log("FIREBASE ENV TEST:", {
 });
 
 let app;
-let messaging;
 
 // Initialize Firebase only if config is provided
 export const isFirebaseConfigured = () => {
@@ -37,9 +36,9 @@ export function initializeFirebase() {
 
   try {
     app = initializeApp(firebaseConfig);
-    messaging = getMessaging(app);
+    
     console.log('Firebase initialized successfully');
-    return messaging;
+    return true;
   } catch (error) {
     console.error('Firebase initialization failed:', error);
     return null;
@@ -51,33 +50,21 @@ export function initializeFirebase() {
  * @returns {Promise<string|null>} FCM token if successful, null otherwise
  */
 export async function requestFCMToken() {
-  if (!isFirebaseConfigured() || !messaging) {
+  if (!isFirebaseConfigured()) {
     console.warn('Firebase not configured');
     return null;
   }
 
   try {
     // Check if browser supports notifications
-    if (!('Notification' in window)) {
-      console.warn('This browser does not support notifications');
-      return null;
-    }
+const permission = await FirebaseMessaging.requestPermissions();
 
-    // Check if already granted
-    if (Notification.permission === 'granted') {
-      return await getFCMToken();
-    }
+if (permission.receive === 'granted') {
+  return await getFCMToken();
+}
 
-    // Request permission
-    if (Notification.permission !== 'denied') {
-      const permission = await Notification.requestPermission();
-      if (permission === 'granted') {
-        return await getFCMToken();
-      }
-    }
-
-    console.log('Notification permission denied');
-    return null;
+console.log('Notification permission denied');
+return null;
   } catch (error) {
     console.error('Error requesting FCM token:', error);
     return null;
@@ -89,16 +76,15 @@ export async function requestFCMToken() {
  * @returns {Promise<string|null>}
  */
 async function getFCMToken() {
-  if (!messaging) return null;
-
   try {
-    const token = await getToken(messaging, {
-      vapidKey: process.env.REACT_APP_FIREBASE_VAPID_KEY || "",
-    });
+    const result = await FirebaseMessaging.getToken();
 
-    if (token) {
-      console.log('FCM token obtained:', token.substring(0, 20) + '...');
-      return token;
+    if (result?.token) {
+      console.log(
+        'FCM token obtained:',
+        result.token.substring(0, 20) + '...'
+      );
+      return result.token;
     }
   } catch (error) {
     console.error('Error getting FCM token:', error);
@@ -112,16 +98,14 @@ async function getFCMToken() {
  * @param {Function} callback - Called when message is received while app is in foreground
  */
 export function setupForegroundMessageListener(callback) {
-  if (!messaging) {
-    console.warn('Firebase not initialized');
-    return;
-  }
-
   try {
-    onMessage(messaging, (payload) => {
-      console.log('Foreground message received:', payload);
-      callback(payload);
-    });
+    return FirebaseMessaging.addListener(
+      'notificationReceived',
+      (notification) => {
+        console.log('Foreground notification received:', notification);
+        callback(notification);
+      }
+    );
   } catch (error) {
     console.error('Error setting up message listener:', error);
   }

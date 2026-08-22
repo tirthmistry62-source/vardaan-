@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "811894366078",
+    "project_id": "vardaan-4652a",
+    "storage_bucket": "vardaan-4652a.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:811894366078:android:a5c2b944c35be1a2721d2f",
+        "android_client_info": {
+          "package_name": "com.vardaan.plus"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB8U1K6BglVW-pdTnEhgNf4HUJkbr-zjto"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

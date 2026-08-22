@@ -60,7 +60,7 @@ http = httpx.AsyncClient(timeout=30, headers=_headers, base_url=REST_BASE)
 app = FastAPI(title="Vardaan+ API")
 api = APIRouter(prefix="/api")
 
-# ------------- Supabase helpers -------------
+# ------------- Supabase helpers ------------
 
 async def sb_select(table: str, query: str = "select=*") -> List[dict]:
     r = await http.get(f"/{table}?{query}")

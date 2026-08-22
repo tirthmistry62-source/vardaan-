@@ -272,7 +272,7 @@ uipSchedule: "UIP Schedule · Govt. of India",
 },
 
           selectRole: {
-  securityMessage: "Secured with password-based authentication",
+  securityMessage: "Secured with password-based auth",
   title: "Who are you signing in as?",
   description:
     "Choose your role to continue. Parents manage children and view vaccination history. Doctors update records after searching an Aadhaar.",

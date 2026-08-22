@@ -22,6 +22,7 @@ export default function ParentRegister() {
     full_name: "",
     aadhaar: "",
     phone: "",
+    email: "",
     password: "",
     confirm: "",
   });
@@ -55,6 +56,18 @@ export default function ParentRegister() {
       );
     }
 
+    const normalizedEmail = form.email.trim().toLowerCase();
+
+    if (
+      !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(
+        normalizedEmail
+      )
+    ) {
+      return toast.error(
+        t("parentRegister.validationEmail")
+      );
+    }
+
     if (form.password.length < 6) {
       return toast.error(
         t("parentRegister.validationPassword")
@@ -76,6 +89,7 @@ export default function ParentRegister() {
           full_name: form.full_name.trim(),
           aadhaar: form.aadhaar,
           phone: form.phone,
+          email: normalizedEmail,
           password: form.password,
         }
       );
@@ -154,8 +168,12 @@ export default function ParentRegister() {
           {t("parentRegister.title")}
         </h1>
 
-        <p className="mt-2 text-slate-500 dark:text-slate-400 text-sm">
+        <p className="mt-2 text-slate-500 dark:text-slate-400 text-sm leading-6">
           {t("parentRegister.description")}
+        </p>
+
+        <p className="mt-1 text-xs text-slate-400 dark:text-slate-500 leading-5">
+          {t("parentRegister.validDetailsMessage")}
         </p>
 
         <div className="mt-8 grid gap-5">
@@ -171,6 +189,7 @@ export default function ParentRegister() {
               placeholder={t(
                 "parentRegister.fullNamePlaceholder"
               )}
+              autoComplete="name"
               className="mt-2 h-12 rounded-xl"
             />
           </div>
@@ -219,8 +238,31 @@ export default function ParentRegister() {
               placeholder={t(
                 "parentRegister.phonePlaceholder"
               )}
+              autoComplete="tel"
               className="mt-2 h-12 rounded-xl"
             />
+          </div>
+
+          <div>
+            <Label>
+              {t("parentRegister.email")}
+            </Label>
+
+            <Input
+              data-testid="reg-email"
+              type="email"
+              value={form.email}
+              onChange={upd("email")}
+              placeholder={t(
+                "parentRegister.emailPlaceholder"
+              )}
+              autoComplete="email"
+              className="mt-2 h-12 rounded-xl"
+            />
+
+            <p className="mt-1.5 text-xs text-slate-500 dark:text-slate-400 leading-5">
+              {t("parentRegister.emailDescription")}
+            </p>
           </div>
 
           <div className="grid grid-cols-2 gap-3">
@@ -237,6 +279,7 @@ export default function ParentRegister() {
                 placeholder={t(
                   "parentRegister.passwordPlaceholder"
                 )}
+                autoComplete="new-password"
                 className="mt-2 h-12 rounded-xl"
               />
             </div>
@@ -254,6 +297,7 @@ export default function ParentRegister() {
                 placeholder={t(
                   "parentRegister.confirmPlaceholder"
                 )}
+                autoComplete="new-password"
                 className="mt-2 h-12 rounded-xl"
               />
             </div>

@@ -1,4 +1,6 @@
 """Vardaan+ backend - Supabase Postgres via REST API (PostgREST)."""
+import re
+
 from fastapi import FastAPI, APIRouter, HTTPException, Depends, Header, UploadFile, File
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
@@ -17,6 +19,12 @@ from typing import List, Optional, Any
 from datetime import datetime, timezone, timedelta, date
 from dateutil.relativedelta import relativedelta
 import json
+import firebase_admin
+from firebase_admin import credentials, messaging
+
+import hashlib
+import secrets
+from datetime import datetime, timedelta, timezone
 
 ROOT_DIR = Path(__file__).parent
 ENV_PATH = ROOT_DIR / '.env'
@@ -34,9 +42,12 @@ JWT_ALGO = 'HS256'
 JWT_TTL_HOURS = 24 * 30
 
 # Firebase Cloud Messaging (FCM) Configuration
-FCM_API_KEY = os.environ.get('FIREBASE_API_KEY', '')
+FCM_SERVICE_ACCOUNT_FILE = ROOT_DIR / "firebase-service-account.json"
+if not firebase_admin._apps:
+    cred = credentials.Certificate(str(FCM_SERVICE_ACCOUNT_FILE))
+    firebase_admin.initialize_app(cred)
 FCM_PROJECT_ID = os.environ.get('FIREBASE_PROJECT_ID', '')
-FCM_ENABLED = FCM_API_KEY and FCM_PROJECT_ID
+
 
 _headers = {
     "apikey": SUPABASE_KEY,
@@ -135,6 +146,7 @@ class ParentRegisterIn(BaseModel):
     full_name: str
     aadhaar: str
     phone: str
+    email: str 
     password: str
 
 class ParentLoginIn(BaseModel):
@@ -144,6 +156,7 @@ class ParentLoginIn(BaseModel):
 class DoctorRegisterIn(BaseModel):
     doctor_name: str
     phone: str
+    email: str 
     password: str
     clinic_name: str
     clinic_address: str
@@ -215,87 +228,79 @@ class VaccinationDocumentUploadIn(BaseModel):
     vaccination_id: str
     document_type: Optional[str] = None  # 'certificate', 'receipt', 'photo', 'other'
 
-async def send_push_notification(parent_id: str, title: str, body: str, data: Optional[dict] = None) -> bool:
+async def send_push_notification(
+    parent_id: str,
+    title: str,
+    body: str,
+    data: Optional[dict] = None
+) -> bool:
     """
-    Send a push notification to all registered devices for a parent via Firebase Cloud Messaging.
-    Returns True if sent successfully, False otherwise.
+    Send a push notification to all registered devices for a parent.
+    Uses Firebase Admin SDK.
     """
-    if not FCM_ENABLED:
-        logger.warning("FCM not configured. Push notification not sent.")
-        return False
-    
     try:
-        # Get all active device tokens for this parent
-        device_tokens = await sb_select('device_tokens', f"select=fcm_token&{eq('parent_id', parent_id)}&is_active=eq.true")
-        
+        device_tokens = await sb_select(
+            'device_tokens',
+            f"select=fcm_token&{eq('parent_id', parent_id)}&is_active=eq.true"
+        )
+
         if not device_tokens:
             logger.info(f"No active device tokens found for parent {parent_id}")
             return False
-        
-        fcm_tokens = [dt['fcm_token'] for dt in device_tokens]
-        
-        # Prepare FCM message
-        fcm_message = {
-            "message": {
-                "notification": {
-                    "title": title,
-                    "body": body,
-                },
-                "data": data or {},
-                "android": {
-                    "priority": "high",
-                    "notification": {
-                        "sound": "default",
-                        "channel_id": "vaccination_reminders",
-                    }
-                },
-                "apns": {
-                    "payload": {
-                        "aps": {
-                            "alert": {
-                                "title": title,
-                                "body": body,
-                            },
-                            "sound": "default",
-                            "badge": 1,
-                        }
-                    }
-                }
-            }
-        }
-        
-        # Send to all tokens (FCM batch send)
-        fcm_base_url = f"https://fcm.googleapis.com/v1/projects/{FCM_PROJECT_ID}/messages:send"
-        
-        # Get access token for Firebase
-        # Note: In production, use Service Account JSON file
-        # For now, use the API key (simpler but less secure)
-        
+
         success_count = 0
-        for token in fcm_tokens:
-            fcm_message_with_token = {
-                "message": {
-                    **fcm_message["message"],
-                    "token": token,
-                }
-            }
-            
+
+        for device in device_tokens:
+            token = device["fcm_token"]
+
             try:
-                r = await http.post(
-                    fcm_base_url,
-                    json=fcm_message_with_token,
-                    headers={"Authorization": f"Bearer {FCM_API_KEY}"},
+                message = messaging.Message(
+                    notification=messaging.Notification(
+                        title=title,
+                        body=body,
+                    ),
+                    data={
+                        str(k): str(v)
+                        for k, v in (data or {}).items()
+                    },
+                    android=messaging.AndroidConfig(
+                        priority="high",
+                        notification=messaging.AndroidNotification(
+                            sound="default",
+                            channel_id="vaccination_reminders",
+                        ),
+                    ),
+                    apns=messaging.APNSConfig(
+                        payload=messaging.APNSPayload(
+                            aps=messaging.Aps(
+                                alert=messaging.ApsAlert(
+                                    title=title,
+                                    body=body,
+                                ),
+                                sound="default",
+                                badge=1,
+                            )
+                        )
+                    ),
+                    token=token,
                 )
-                if r.status_code == 200:
-                    success_count += 1
-                else:
-                    logger.warning(f"FCM send failed for token {token[:20]}...: {r.status_code}")
+
+                messaging.send(message)
+                success_count += 1
+
             except Exception as e:
-                logger.error(f"Error sending FCM to token {token[:20]}...: {e}")
-        
-        logger.info(f"Sent push notification to {success_count}/{len(fcm_tokens)} devices for parent {parent_id}")
+                logger.error(
+                    f"FCM send failed for token {token[:20]}...: {e}"
+                )
+
+        logger.info(
+            f"Sent push notification to "
+            f"{success_count}/{len(device_tokens)} devices "
+            f"for parent {parent_id}"
+        )
+
         return success_count > 0
-        
+
     except Exception as e:
         logger.error(f"Error in send_push_notification: {e}")
         return False
@@ -608,33 +613,338 @@ async def ensure_parent_access_code(parent: dict) -> dict:
     parent['access_code'] = code
     return parent
 
+async def send_password_reset_otp(email: str, otp: str):
+    service_id = os.getenv("EMAILJS_SERVICE_ID")
+    template_id = os.getenv("EMAILJS_TEMPLATE_ID")
+    public_key = os.getenv("EMAILJS_PUBLIC_KEY")
+    private_key = os.getenv("EMAILJS_PRIVATE_KEY")
+
+    if not service_id or not template_id or not public_key:
+        raise HTTPException(
+            500,
+            "Email service is not configured"
+        )
+
+    if not private_key:
+        raise HTTPException(
+            500,
+            "Email service private key is not configured"
+        )
+
+    payload = {
+        "service_id": service_id,
+        "template_id": template_id,
+        "user_id": public_key,
+        "accessToken": private_key,
+        "template_params": {
+            "email": email,
+            "passcode": otp,
+            "time": "5 minutes",
+        },
+    }
+
+    async with httpx.AsyncClient(timeout=15) as client:
+        response = await client.post(
+            "https://api.emailjs.com/api/v1.0/email/send",
+            json=payload,
+        )
+
+    if response.status_code != 200:
+        raise HTTPException(
+            502,
+            f"EmailJS error {response.status_code}: {response.text}"
+        )
+
+class PasswordResetRequestIn(BaseModel):
+    role: str
+    aadhaar: str 
+    email: str
+
+class PasswordResetAadhaarCheckIn(BaseModel):
+    aadhaar: str
+
+
+@api.post("/auth/check-parent-aadhaar")
+async def check_parent_aadhaar(body: PasswordResetAadhaarCheckIn):
+    aadhaar = body.aadhaar.strip()
+
+    if not re.fullmatch(r"\d{12}", aadhaar):
+        raise HTTPException(
+            400,
+            "Enter a valid 12-digit Aadhaar number"
+        )
+
+    parent = await sb_find_one(
+        "parents",
+        eq("aadhaar", aadhaar),
+    )
+
+    if not parent:
+        raise HTTPException(
+            404,
+            "No parent account found with this Aadhaar number"
+        )
+
+    return {
+        "exists": True
+    }
+
+
+@api.post("/auth/forgot-password")
+async def request_password_reset(body: PasswordResetRequestIn):
+    role = body.role.strip().lower()
+
+    if role not in ("parent", "doctor"):
+        raise HTTPException(400, "Invalid account type")
+
+    email = body.email.strip().lower()
+
+    if not re.match(r"^[^\s@]+@[^\s@]+\.[^\s@]+$", email):
+        raise HTTPException(400, "Enter a valid email address")
+
+    table = "parents" if role == "parent" else "doctors"
+
+    if role == "parent":
+        user = await sb_find_one(
+            "parents",
+            eq("aadhaar", body.aadhaar.strip()),
+    )
+    else:
+        user = await sb_find_one(
+        "doctors",
+        eq("email", email),
+    )
+
+    if not user:
+        raise HTTPException(
+        404,
+        "Account not found"
+    )
+
+    if role == "parent":
+        stored_email = (user.get("email") or "").strip().lower()
+
+        if stored_email != email:
+            raise HTTPException(
+                400,
+                "Email does not match the email linked to this Aadhaar number"
+            )
+
+    otp = f"{secrets.randbelow(1_000_000):06d}"
+    otp_hash = hashlib.sha256(otp.encode()).hexdigest()
+
+    expires_at = (
+        datetime.now(timezone.utc) + timedelta(minutes=15)
+    ).isoformat()
+
+    await sb_insert(
+        "password_reset_tokens",
+        {
+            "id": str(uuid.uuid4()),
+            "user_id": user["id"],
+            "role": role,
+            "email": email,
+            "otp_hash": otp_hash,
+            "expires_at": expires_at,
+            "attempts": 0,
+            "used": False,
+            "created_at": datetime.now(timezone.utc).isoformat(),
+        },
+    )
+
+    await send_password_reset_otp(email, otp)
+
+    return {
+        "message": "Password reset OTP sent",
+    }
+
+class PasswordResetVerifyIn(BaseModel):
+    role: str
+    email: str
+    otp: str
+
+
+@api.post("/auth/verify-password-reset")
+async def verify_password_reset(body: PasswordResetVerifyIn):
+    role = body.role.strip().lower()
+    email = body.email.strip().lower()
+    otp = body.otp.strip()
+
+    if role not in ("parent", "doctor"):
+        raise HTTPException(400, "Invalid account type")
+
+    if not re.match(r"^[^\s@]+@[^\s@]+\.[^\s@]+$", email):
+        raise HTTPException(400, "Enter a valid email address")
+
+    if not re.fullmatch(r"\d{6}", otp):
+        raise HTTPException(400, "OTP must be 6 digits")
+
+    token = await sb_find_one(
+        "password_reset_tokens",
+        f"{eq('email', email)}&role=eq.{role}&used=eq.false&order=created_at.desc",
+    )
+
+    if not token:
+        raise HTTPException(400, "Invalid or expired OTP")
+
+    if token.get("attempts", 0) >= 5:
+        raise HTTPException(
+            429,
+            "Too many incorrect OTP attempts",
+        )
+
+    expires_at = datetime.fromisoformat(
+        token["expires_at"].replace("Z", "+00:00")
+    )
+
+    if datetime.now(timezone.utc) > expires_at:
+        raise HTTPException(400, "OTP has expired")
+
+    otp_hash = hashlib.sha256(otp.encode()).hexdigest()
+
+    if otp_hash != token["otp_hash"]:
+        await sb_update(
+            "password_reset_tokens",
+            eq("id", token["id"]),
+            {"attempts": token.get("attempts", 0) + 1},
+        )
+
+        raise HTTPException(400, "Invalid OTP")
+
+    return {
+        "message": "OTP verified",
+        "reset_token": token["id"],
+    }    
+
+class PasswordResetCompleteIn(BaseModel):
+    role: str
+    email: str
+    reset_token: str
+    new_password: str
+
+
+@api.post("/auth/reset-password")
+async def reset_password(body: PasswordResetCompleteIn):
+    role = body.role.strip().lower()
+    email = body.email.strip().lower()
+    reset_token = body.reset_token.strip()
+
+    if role not in ("parent", "doctor"):
+        raise HTTPException(400, "Invalid account type")
+
+    if not re.match(r"^[^\s@]+@[^\s@]+\.[^\s@]+$", email):
+        raise HTTPException(400, "Enter a valid email address")
+
+    if len(body.new_password) < 6:
+        raise HTTPException(
+            400,
+            "Password must be at least 6 characters"
+        )
+
+    token = await sb_find_one(
+        "password_reset_tokens",
+        f"{eq('id', reset_token)}&email=eq.{email}&role=eq.{role}&used=eq.false",
+    )
+
+    if not token:
+        raise HTTPException(
+            400,
+            "Invalid or expired password reset request"
+        )
+
+    expires_at = datetime.fromisoformat(
+        token["expires_at"].replace("Z", "+00:00")
+    )
+
+    if datetime.now(timezone.utc) > expires_at:
+        raise HTTPException(
+            400,
+            "Password reset request has expired"
+        )
+
+    table = "parents" if role == "parent" else "doctors"
+
+    user = await sb_find_one(
+        table,
+        eq("id", token["user_id"]),
+    )
+
+    if not user:
+        raise HTTPException(
+            404,
+            "Account not found"
+        )
+
+    await sb_update(
+        table,
+        eq("id", user["id"]),
+        {
+            "password_hash": hash_password(
+                body.new_password
+            )
+        },
+    )
+
+    await sb_update(
+        "password_reset_tokens",
+        eq("id", token["id"]),
+        {
+            "used": True
+        },
+    )
+
+    return {
+        "message": "Password reset successful"
+    }
+
 # ------------- Auth: Parent -------------
 
 @api.post('/parent/register')
 async def parent_register(body: ParentRegisterIn):
     if not valid_aadhaar(body.aadhaar):
         raise HTTPException(400, "Aadhaar must be 12 digits")
+
     if not valid_phone(body.phone):
         raise HTTPException(400, "Invalid phone number")
+
+    email = body.email.strip().lower()
+
+    if not re.match(r"^[^\s@]+@[^\s@]+\.[^\s@]+$", email):
+        raise HTTPException(400, "Enter a valid email address")
+
     if len(body.password) < 6:
         raise HTTPException(400, "Password must be at least 6 characters")
+
     if await sb_find_one('parents', eq('aadhaar', body.aadhaar)):
         raise HTTPException(409, "Aadhaar already registered")
+
     if await sb_find_one('parents', eq('phone', body.phone)):
         raise HTTPException(409, "Phone already registered")
+
+    if await sb_find_one('parents', eq('email', email)):
+        raise HTTPException(409, "Email already registered")
+
     access_code = await generate_unique_access_code()
+
     doc = {
         'id': str(uuid.uuid4()),
         'full_name': body.full_name.strip(),
         'aadhaar': body.aadhaar,
         'phone': body.phone,
+        'email': email,
         'password_hash': hash_password(body.password),
         'access_code': access_code,
         'created_at': now_iso(),
     }
+
     p = await sb_insert('parents', doc)
+
     token = make_token(p['id'], 'parent')
-    return {'token': token, 'parent': strip_secret(p)}
+
+    return {
+        'token': token,
+        'parent': strip_secret(p),
+    }
 
 @api.post('/parent/login')
 async def parent_login(body: ParentLoginIn):
@@ -659,23 +969,41 @@ async def parent_me(cur=Depends(require_parent)):
 async def doctor_register(body: DoctorRegisterIn):
     if not valid_phone(body.phone):
         raise HTTPException(400, "Invalid phone number")
+
+    email = body.email.strip().lower()
+
+    if not re.match(r"^[^\s@]+@[^\s@]+\.[^\s@]+$", email):
+        raise HTTPException(400, "Enter a valid email address")
+
     if len(body.password) < 6:
         raise HTTPException(400, "Password must be at least 6 characters")
+
     if await sb_find_one('doctors', eq('phone', body.phone)):
         raise HTTPException(409, "Phone already registered")
+
+    if await sb_find_one('doctors', eq('email', email)):
+        raise HTTPException(409, "Email already registered")
+
     doc = {
         'id': str(uuid.uuid4()),
         'doctor_name': body.doctor_name.strip(),
         'phone': body.phone,
+        'email': email,
         'password_hash': hash_password(body.password),
         'clinic_name': body.clinic_name.strip(),
         'clinic_address': body.clinic_address.strip(),
         'profile_photo_url': body.profile_photo_url,
         'created_at': now_iso(),
     }
+
     d = await sb_insert('doctors', doc)
+
     token = make_token(d['id'], 'doctor')
-    return {'token': token, 'doctor': strip_secret(d)}
+
+    return {
+        'token': token,
+        'doctor': strip_secret(d),
+    }
 
 @api.post('/doctor/login')
 async def doctor_login(body: DoctorLoginIn):
@@ -1150,6 +1478,36 @@ async def trigger_vaccination_reminders():
     """
     result = await check_and_create_vaccination_reminders()
     return result
+
+@api.post('/parent/test-push')
+async def test_push_notification():
+    device_tokens = await sb_select(
+        'device_tokens',
+        'select=parent_id&is_active=eq.true&limit=1'
+    )
+
+    if not device_tokens:
+        raise HTTPException(404, "No registered device found")
+
+    parent_id = device_tokens[0]['parent_id']
+
+    sent = await send_push_notification(
+        parent_id,
+        title="Vardaan+ Test",
+        body="Push notifications are working correctly.",
+        data={
+            "type": "test_push"
+        }
+    )
+
+    if not sent:
+        raise HTTPException(500, "Failed to send test push notification")
+
+    return {
+        "ok": True,
+        "message": "Test push notification sent"
+    }
+
 
 # ------------- Vaccination Documents (Image Upload) -------------
 

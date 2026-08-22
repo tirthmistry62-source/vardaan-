@@ -5,6 +5,9 @@ import { Toaster } from "sonner";
 import { getSession } from "@/lib/api";
 import { initializeFirebase, setupForegroundMessageListener } from "@/lib/firebase";
 import { useEffect } from "react";
+import ParentForgotPassword from "@/pages/ParentForgotPassword";
+import ParentForgotPasswordVerify from "@/pages/ParentForgotPasswordVerify";
+import ParentForgotPasswordReset from "@/pages/ParentForgotPasswordReset";
 
 import Landing from "@/pages/Landing";
 import SelectRole from "@/pages/SelectRole";
@@ -44,6 +47,18 @@ function AnimatedRoutes() {
           <Route path="/select-role" element={<SelectRole />} />
 
           <Route path="/parent/login" element={<ParentLogin />} />
+          <Route
+                 path="/parent/forgot-password"
+                 element={<ParentForgotPassword />}
+          />  
+          <Route
+                 path="/parent/forgot-password/verify"
+                 element={<ParentForgotPasswordVerify />}
+          />
+          <Route
+                 path="/parent/forgot-password/reset"
+                 element={<ParentForgotPasswordReset />}
+          />
           <Route path="/parent/register" element={<ParentRegister />} />
           <Route path="/parent/dashboard" element={<RequireRole role="parent"><ParentDashboard /></RequireRole>} />
           <Route path="/parent/settings" element={<RequireRole role="parent"><ParentSettings /></RequireRole>} />

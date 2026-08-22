@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Vardaan+</string>
+    <string name="title_activity_main">Vardaan+</string>
+    <string name="package_name">com.vardaan.plus</string>
+    <string name="custom_url_scheme">com.vardaan.plus</string>
+</resources>

@@ -27,6 +27,33 @@ export default function ParentLogin() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
 
+const handleForgotPassword = async () => {
+  if (!/^\d{12}$/.test(aadhaar)) {
+    return toast.error(
+      t("parentLogin.aadhaarRequiredForReset")
+    );
+  }
+
+  try {
+    await api.post("/auth/check-parent-aadhaar", {
+      aadhaar,
+    });
+
+    nav("/parent/forgot-password", {
+      state: {
+        aadhaar,
+      },
+    });
+  } catch (err) {
+    toast.error(
+      err?.response?.data?.detail ||
+        t("parentLogin.aadhaarNotFoundForReset")
+    );
+  }
+};
+
+
+
   const submit = async (e) => {
     e.preventDefault();
 
@@ -151,7 +178,9 @@ export default function ParentLogin() {
                   value={aadhaar}
                   onChange={(e) =>
                     setAadhaar(
-                      e.target.value.replace(/\D/g, "").slice(0, 12)
+                      e.target.value
+                        .replace(/\D/g, "")
+                        .slice(0, 12)
                     )
                   }
                   inputMode="numeric"
@@ -177,6 +206,17 @@ export default function ParentLogin() {
                   placeholder={t("parentLogin.passwordPlaceholder")}
                   className="mt-2 h-12 rounded-xl"
                 />
+
+                <div className="mt-2 text-right">
+                  <button
+  type="button"
+  data-testid="parent-forgot-password-link"
+  onClick={handleForgotPassword}
+  className="text-sm text-teal-700 dark:text-teal-300 font-medium hover:underline"
+>
+  {t("parentLogin.forgotPassword")}
+</button>
+                </div>
               </div>
             </div>
 
@@ -416,6 +456,18 @@ export default function ParentLogin() {
                         : "#0f172a",
                     }}
                   />
+
+                  <div className="mt-2 text-right">
+                    <button
+  type="button"
+  data-testid="parent-forgot-password-link"
+  onClick={handleForgotPassword}
+  className="text-sm font-medium hover:underline"
+  style={{ color: "#19806c" }}
+>
+  {t("parentLogin.forgotPassword")}
+</button>
+                  </div>
                 </div>
               </div>
 

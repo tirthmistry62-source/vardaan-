@@ -6,17 +6,18 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { api, setSession } from "@/lib/api";
-import { Loader2, ArrowLeft, Languages } from "lucide-react";
+import { Loader2, ArrowLeft } from "lucide-react";
 import ThemeToggle from "@/components/ThemeToggle";
 import { useTranslation } from "react-i18next";
 
 export default function DoctorRegister() {
   const nav = useNavigate();
-  const { i18n, t } = useTranslation();
+  const { t } = useTranslation();
 
   const [form, setForm] = useState({
     doctor_name: "",
     phone: "",
+    email: "",
     password: "",
     clinic_name: "",
     clinic_address: "",
@@ -25,11 +26,10 @@ export default function DoctorRegister() {
   const [loading, setLoading] = useState(false);
 
   const upd = (k) => (e) =>
-    setForm({ ...form, [k]: e.target.value });
-
-  const changeLanguage = async (language) => {
-    await i18n.changeLanguage(language);
-  };
+    setForm({
+      ...form,
+      [k]: e.target.value,
+    });
 
   const submit = async (e) => {
     e.preventDefault();
@@ -42,18 +42,47 @@ export default function DoctorRegister() {
       return toast.error(t("doctorRegister.validPhone"));
     }
 
-    if (form.password.length < 6) {
-      return toast.error(t("doctorRegister.passwordLength"));
+    const normalizedEmail = form.email.trim().toLowerCase();
+
+    if (
+      !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(
+        normalizedEmail
+      )
+    ) {
+      return toast.error(
+        t("doctorRegister.validationEmail")
+      );
     }
 
-    if (!form.clinic_name.trim() || !form.clinic_address.trim()) {
-      return toast.error(t("doctorRegister.clinicRequired"));
+    if (form.password.length < 6) {
+      return toast.error(
+        t("doctorRegister.passwordLength")
+      );
+    }
+
+    if (
+      !form.clinic_name.trim() ||
+      !form.clinic_address.trim()
+    ) {
+      return toast.error(
+        t("doctorRegister.clinicRequired")
+      );
     }
 
     setLoading(true);
 
     try {
-      const { data } = await api.post("/doctor/register", form);
+      const { data } = await api.post(
+        "/doctor/register",
+        {
+          doctor_name: form.doctor_name.trim(),
+          phone: form.phone,
+          email: normalizedEmail,
+          password: form.password,
+          clinic_name: form.clinic_name.trim(),
+          clinic_address: form.clinic_address.trim(),
+        }
+      );
 
       setSession({
         token: data.token,
@@ -61,8 +90,13 @@ export default function DoctorRegister() {
         user: data.doctor,
       });
 
-      toast.success(t("doctorRegister.accountCreated"));
-      nav("/doctor/dashboard", { replace: true });
+      toast.success(
+        t("doctorRegister.accountCreated")
+      );
+
+      nav("/doctor/dashboard", {
+        replace: true,
+      });
     } catch (err) {
       toast.error(
         err?.response?.data?.detail ||
@@ -76,9 +110,6 @@ export default function DoctorRegister() {
   return (
     <div className="min-h-screen aurora-bg flex items-center justify-center p-6">
       <div className="fixed top-4 right-4 z-50 flex items-center gap-2">
-        {/* Translation button */}
-        
-
         <ThemeToggle />
       </div>
 
@@ -99,14 +130,20 @@ export default function DoctorRegister() {
           {t("doctorRegister.title")}
         </h1>
 
-        <p className="mt-2 text-slate-500 dark:text-slate-400 text-sm">
+        <p className="mt-2 text-slate-500 dark:text-slate-400 text-sm leading-6">
           {t("doctorRegister.description")}
+        </p>
+
+        <p className="mt-1 text-xs text-slate-400 dark:text-slate-500 leading-5">
+          {t("doctorRegister.validDetailsMessage")}
         </p>
 
         <div className="mt-8 grid gap-5">
           {/* Doctor name */}
           <div>
-            <Label>{t("doctorRegister.doctorName")}</Label>
+            <Label>
+              {t("doctorRegister.doctorName")}
+            </Label>
 
             <div className="mt-2 flex items-stretch rounded-xl border border-slate-300 dark:border-slate-700 focus-within:ring-2 focus-within:ring-teal-500 dark:ring-teal-400/20 focus-within:border-teal-600 overflow-hidden bg-white dark:bg-slate-900">
               <span className="px-4 flex items-center bg-slate-50 dark:bg-slate-800 text-slate-500 dark:text-slate-400 font-semibold border-r border-slate-200 dark:border-slate-800 select-none">
@@ -120,19 +157,22 @@ export default function DoctorRegister() {
                 placeholder={t(
                   "doctorRegister.doctorNamePlaceholder"
                 )}
+                autoComplete="name"
                 className="flex-1 h-12 border-0 rounded-none focus-visible:ring-0 focus-visible:ring-offset-0 shadow-none"
               />
             </div>
 
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1.5">
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1.5 leading-5">
               {t("doctorRegister.doctorNameDescription")}
             </p>
           </div>
 
-          {/* Phone + Password */}
+          {/* Phone + Email */}
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <Label>{t("doctorRegister.phone")}</Label>
+              <Label>
+                {t("doctorRegister.phone")}
+              </Label>
 
               <Input
                 data-testid="dr-phone"
@@ -146,26 +186,58 @@ export default function DoctorRegister() {
                       .slice(0, 15),
                   })
                 }
+                autoComplete="tel"
                 className="mt-2 h-12 rounded-xl"
               />
             </div>
 
             <div>
-              <Label>{t("doctorRegister.password")}</Label>
+              <Label>
+                {t("doctorRegister.email")}
+              </Label>
 
               <Input
-                data-testid="dr-password"
-                type="password"
-                value={form.password}
-                onChange={upd("password")}
+                data-testid="dr-email"
+                type="email"
+                value={form.email}
+                onChange={upd("email")}
+                placeholder={t(
+                  "doctorRegister.emailPlaceholder"
+                )}
+                autoComplete="email"
                 className="mt-2 h-12 rounded-xl"
               />
             </div>
           </div>
 
+          <p className="-mt-3 text-xs text-slate-500 dark:text-slate-400 leading-5">
+            {t("doctorRegister.emailDescription")}
+          </p>
+
+          {/* Password */}
+          <div>
+            <Label>
+              {t("doctorRegister.password")}
+            </Label>
+
+            <Input
+              data-testid="dr-password"
+              type="password"
+              value={form.password}
+              onChange={upd("password")}
+              placeholder={t(
+                "doctorRegister.passwordPlaceholder"
+              )}
+              autoComplete="new-password"
+              className="mt-2 h-12 rounded-xl"
+            />
+          </div>
+
           {/* Clinic name */}
           <div>
-            <Label>{t("doctorRegister.clinicName")}</Label>
+            <Label>
+              {t("doctorRegister.clinicName")}
+            </Label>
 
             <Input
               data-testid="dr-clinic"
@@ -180,7 +252,9 @@ export default function DoctorRegister() {
 
           {/* Clinic address */}
           <div>
-            <Label>{t("doctorRegister.clinicAddress")}</Label>
+            <Label>
+              {t("doctorRegister.clinicAddress")}
+            </Label>
 
             <Textarea
               data-testid="dr-address"

@@ -11,6 +11,12 @@ const firebaseConfig = {
   appId: process.env.REACT_APP_FIREBASE_APP_ID || "",
 };
 
+console.log("FIREBASE ENV TEST:", {
+  apiKey: process.env.REACT_APP_FIREBASE_API_KEY,
+  projectId: process.env.REACT_APP_FIREBASE_PROJECT_ID,
+  senderId: process.env.REACT_APP_FIREBASE_MESSAGING_SENDER_ID,
+});
+
 let app;
 let messaging;
 

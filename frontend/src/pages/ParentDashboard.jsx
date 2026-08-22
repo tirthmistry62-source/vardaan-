@@ -4,6 +4,7 @@ import AppShell from "@/components/AppShell";
 import { api, getSession } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
+import { usePushNotifications } from "@/hooks/usePushNotifications";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Plus,
@@ -24,6 +25,7 @@ export default function ParentDashboard() {
   console.log("CURRENT LANGUAGE:", i18n.language);
   const nav = useNavigate();
   const session = getSession();
+  usePushNotifications(session?.user, true);
 
   const [children, setChildren] = useState([]);
   const [unread, setUnread] = useState(0);

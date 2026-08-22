@@ -6,12 +6,12 @@ importScripts('https://www.gstatic.com/firebasejs/9.10.0/firebase-messaging-comp
 
 // Initialize Firebase with config
 firebase.initializeApp({
-  apiKey: "YOUR_REACT_APP_FIREBASE_API_KEY",
-  authDomain: "YOUR_REACT_APP_FIREBASE_AUTH_DOMAIN",
-  projectId: "YOUR_REACT_APP_FIREBASE_PROJECT_ID",
-  storageBucket: "YOUR_REACT_APP_FIREBASE_STORAGE_BUCKET",
-  messagingSenderId: "YOUR_REACT_APP_FIREBASE_MESSAGING_SENDER_ID",
-  appId: "YOUR_REACT_APP_FIREBASE_APP_ID"
+  apiKey: "AIzaSyBtIc2lvMevKY53G18nBXYUhs4f9U60hDk",
+  authDomain: "vardaan-4652a.firebaseapp.com",
+  projectId: "vardaan-4652a",
+  storageBucket: "vardaan-4652a.firebasestorage.app",
+  messagingSenderId: "811894366078",
+  appId: "1:811894366078:web:30dbcf1b006e6237721d2f"
 });
 
 // Get Firebase messaging instance

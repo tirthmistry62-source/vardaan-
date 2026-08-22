@@ -1485,13 +1485,7 @@ async def test_push_notification(
     authorization: str = Header(...),
     cur=Depends(require_parent)
 ):
-    device_tokens = await sb_select(
-        'device_tokens',
-        'select=parent_id&is_active=eq.true&limit=1'
-    )
 
-    if not device_tokens:
-        raise HTTPException(404, "No registered device found")
 
     parent_id = cur['user_id']
 

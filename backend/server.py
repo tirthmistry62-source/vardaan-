@@ -1685,8 +1685,10 @@ async def register_device_token(body: DeviceTokenIn, cur=Depends(require_parent)
     if existing:
         # Update last_used timestamp
         await sb_update('device_tokens', eq('fcm_token', body.fcm_token), {
+            'parent_id': cur['user_id'],
             'last_used': now_iso(),
             'is_active': True,
+            
         })
         return {'status': 'updated', 'message': 'Device token updated'}
     

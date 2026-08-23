@@ -99,6 +99,18 @@ i18n
   noNotifications: "No notifications yet.",
 },
 
+forgotPassword: {
+  title: "Forgot Password",
+  description: "Enter your email address to receive a password reset OTP.",
+  backToLogin: "Back to login",
+  email: "Email address",
+  emailPlaceholder: "Enter your email address",
+  sendOtp: "Send OTP",
+  invalidEmail: "Enter a valid email address",
+  otpSent: "Password reset OTP sent",
+  requestFailed: "Failed to send password reset OTP",
+},
+
           editChild: {
   title: "Edit child",
   description: "Update {{name}}'s details.",
@@ -269,6 +281,7 @@ uipSchedule: "UIP Schedule · Govt. of India",
   panelDescription:
     "Your child's history, from BCG at birth to boosters at 16 — kept safe, searchable, and shareable with any doctor.",
   childIllustrationAlt: "Child with teddy",
+  forgotPassword: "Forgot Password",
 },
 
           selectRole: {
@@ -470,6 +483,18 @@ parentDashboard: {
             parent: "माता-पिता",
           },
 
+          forgotPassword: {
+  title: "पासवर्ड भूल गए",
+  description: "पासवर्ड रीसेट OTP प्राप्त करने के लिए अपना ईमेल पता दर्ज करें।",
+  backToLogin: "लॉगिन पर वापस जाएं",
+  email: "ईमेल पता",
+  emailPlaceholder: "अपना ईमेल पता दर्ज करें",
+  sendOtp: "OTP भेजें",
+  invalidEmail: "मान्य ईमेल पता दर्ज करें",
+  otpSent: "पासवर्ड रीसेट OTP भेजा गया",
+  requestFailed: "पासवर्ड रीसेट OTP भेजने में विफल",
+},
+
           parentNotifications: {
   title: "सूचनाएं",
   description: "आपके बच्चों के टीकाकरण से संबंधित अपडेट।",
@@ -613,6 +638,7 @@ uipSchedule: "UIP शेड्यूल · भारत सरकार",
   panelDescription:
     "आपके बच्चे का इतिहास, जन्म के समय BCG से लेकर 16 साल की उम्र के बूस्टर तक — सुरक्षित, खोजने योग्य और किसी भी डॉक्टर के साथ साझा करने योग्य।",
   childIllustrationAlt: "टेडी के साथ बच्चा",
+  forgotPassword: "पासवर्ड भूल गए?",
 },
 
 addChild: {
@@ -926,6 +952,18 @@ selectRole: {
   deleteFailed: "हटवणे अयशस्वी झाले",
 },
 
+forgotPassword: {
+  title: "पासवर्ड विसरलात?",
+  description: "पासवर्ड रीसेट OTP मिळवण्यासाठी तुमचा ईमेल पत्ता प्रविष्ट करा.",
+  backToLogin: "लॉगिनकडे परत जा",
+  email: "ईमेल पत्ता",
+  emailPlaceholder: "तुमचा ईमेल पत्ता प्रविष्ट करा",
+  sendOtp: "OTP पाठवा",
+  invalidEmail: "वैध ईमेल पत्ता प्रविष्ट करा",
+  otpSent: "पासवर्ड रीसेट OTP पाठवला गेला",
+  requestFailed: "पासवर्ड रीसेट OTP पाठवण्यात अयशस्वी",
+},
+
           childProfile: {
   childNotFound: "मूल सापडले नाही.",
   pdfGenerationFailed: "PDF तयार करण्यात अयशस्वी. कृपया पुन्हा प्रयत्न करा.",
@@ -1085,6 +1123,7 @@ parentLogin: {
   panelDescription:
     "तुमच्या मुलाचा इतिहास, जन्मावेळी BCG पासून वयाच्या 16 व्या वर्षीच्या बूस्टरपर्यंत — सुरक्षित, शोधण्यायोग्य आणि कोणत्याही डॉक्टरसोबत शेअर करता येण्यासारखा.",
   childIllustrationAlt: "टेडीसह मूल",
+  forgotPassword: "पासवर्ड विसरलात?",
 },
 
 parentDashboard: {
@@ -1310,6 +1349,18 @@ doctorRegister: {
             hi: "નમસ્તે, {{name}}",
           },
 
+          forgotPassword: {
+  title: "પાસવર્ડ ભૂલી ગયા?",
+  description: "પાસવર્ડ રીસેટ OTP મેળવવા માટે તમારું ઇમેઇલ સરનામું દાખલ કરો.",
+  backToLogin: "લૉગિન પર પાછા જાઓ",
+  email: "ઇમેઇલ સરનામું",
+  emailPlaceholder: "તમારું ઇમેઇલ સરનામું દાખલ કરો",
+  sendOtp: "OTP મોકલો",
+  invalidEmail: "માન્ય ઇમેઇલ સરનામું દાખલ કરો",
+  otpSent: "પાસવર્ડ રીસેટ OTP મોકલવામાં આવ્યો",
+  requestFailed: "પાસવર્ડ રીસેટ OTP મોકલવામાં નિષ્ફળ",
+},
+
           parentNotifications: {
   title: "સૂચનાઓ",
   description: "તમારા બાળકોના રસીકરણ સંબંધિત અપડેટ્સ.",
@@ -1506,6 +1557,7 @@ parentLogin: {
   panelDescription:
     "તમારા બાળકનો ઇતિહાસ, જન્મ સમયે BCGથી લઈને 16 વર્ષની ઉંમરના બૂસ્ટર સુધી — સુરક્ષિત, શોધી શકાય એવો અને કોઈપણ ડૉક્ટર સાથે શેર કરી શકાય એવો.",
   childIllustrationAlt: "ટેડી સાથેનું બાળક",
+  forgotPassword: "પાસવર્ડ ભૂલી ગયા?",
 },
 
 parentDashboard: {

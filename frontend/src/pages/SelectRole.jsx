@@ -7,15 +7,33 @@ import {
   Languages,
 } from "lucide-react";
 import ThemeToggle from "@/components/ThemeToggle";
+import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 
 export default function SelectRole() {
   const { i18n, t } = useTranslation();
 
+  const [languageOpen, setLanguageOpen] = useState(false);
+  const languageRef = useRef(null); 
+
   const changeLanguage = async (language) => {
     await i18n.changeLanguage(language);
   };
+
+  useEffect(() => {
+  const handleClickOutside = (event) => {
+    if (languageRef.current && !languageRef.current.contains(event.target)) {
+      setLanguageOpen(false);
+    }
+  };
+
+  document.addEventListener("mousedown", handleClickOutside);
+
+  return () => {
+    document.removeEventListener("mousedown", handleClickOutside);
+  };
+}, []);
 
   return (
     <div className="min-h-screen aurora-bg px-6 sm:px-8 py-10 sm:py-12">
@@ -26,9 +44,11 @@ export default function SelectRole() {
 
           <div className="flex items-center gap-2 shrink-0">
             {/* Language selector */}
-            <div className="relative group">
+            <div ref={languageRef} className="relative">
               <Button
                 variant="ghost"
+                onClick={() => setLanguageOpen((open) => !open)}
+                
                 className="rounded-full h-11 px-4 gap-2 border border-slate-300 dark:border-slate-600 bg-transparent hover:bg-slate-100 dark:hover:bg-slate-800"
                 aria-label={t("language")}
               >
@@ -38,11 +58,15 @@ export default function SelectRole() {
                 </span>
               </Button>
 
-              <div className="absolute right-0 top-12 hidden group-hover:block z-50">
+              {languageOpen && (
+  <div className="absolute right-0 top-12 z-50">
                 <div className="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-lg p-1 min-w-[130px]">
                   <button
                     type="button"
-                    onClick={() => changeLanguage("en")}
+                    onClick={() => {
+  changeLanguage("en");
+  setLanguageOpen(false);
+}}
                     className="w-full text-left px-3 py-2 rounded-lg text-sm hover:bg-slate-100 dark:hover:bg-slate-700"
                   >
                     {t("english")}
@@ -50,7 +74,10 @@ export default function SelectRole() {
 
                   <button
                     type="button"
-                    onClick={() => changeLanguage("hi")}
+                    onClick={() => {
+  changeLanguage("hi");
+  setLanguageOpen(false);
+}}
                     className="w-full text-left px-3 py-2 rounded-lg text-sm hover:bg-slate-100 dark:hover:bg-slate-700"
                   >
                     {t("hindi")}
@@ -58,7 +85,10 @@ export default function SelectRole() {
 
                   <button
                     type="button"
-                    onClick={() => changeLanguage("mr")}
+                    onClick={() => {
+  changeLanguage("mr");
+  setLanguageOpen(false);
+}}
                     className="w-full text-left px-3 py-2 rounded-lg text-sm hover:bg-slate-100 dark:hover:bg-slate-700"
                   >
                     {t("marathi")}
@@ -66,13 +96,17 @@ export default function SelectRole() {
 
                   <button
                     type="button"
-                    onClick={() => changeLanguage("gu")}
+                    onClick={() => {
+  changeLanguage("gu");
+  setLanguageOpen(false);
+}}
                     className="w-full text-left px-3 py-2 rounded-lg text-sm hover:bg-slate-100 dark:hover:bg-slate-700"
                   >
                     {t("gujarati")}
                   </button>
-                </div>
+                </div> 
               </div>
+            )}
             </div>
 
             <ThemeToggle />

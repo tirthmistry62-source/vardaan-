@@ -118,7 +118,7 @@ export default function ParentForgotPasswordReset() {
 
         <div className="mt-8 space-y-5">
           <div>
-            <Label>
+            <Label required>
               {t("forgotPassword.newPassword")}
             </Label>
 
@@ -135,7 +135,7 @@ export default function ParentForgotPasswordReset() {
           </div>
 
           <div>
-            <Label>
+            <Label required>
               {t("forgotPassword.confirmPassword")}
             </Label>
 

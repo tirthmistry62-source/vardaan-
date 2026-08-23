@@ -45,6 +45,7 @@ export default function DoctorDashboard() {
       <form onSubmit={search} className="card-soft p-6 sm:p-8">
         <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
   {t("doctorDashboard.searchByAadhaar")}
+  <span className="ml-1 text-rose-500 dark:text-rose-400" aria-hidden="true">*</span>
 </label>
         <div className="mt-3 flex flex-col sm:flex-row gap-3">
           <div className="relative flex-1">

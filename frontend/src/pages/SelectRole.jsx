@@ -21,11 +21,8 @@ export default function SelectRole() {
     <div className="min-h-screen aurora-bg px-6 sm:px-8 py-10 sm:py-12">
       <div className="max-w-5xl mx-auto">
         {/* Top bar */}
-        <div className="flex items-center justify-between gap-4">
-          <div className="flex items-start gap-2 text-slate-500 dark:text-slate-400 text-sm leading-relaxed max-w-[280px] sm:max-w-none">
-            <ShieldCheck className="w-4 h-4 text-teal-700 dark:text-teal-300 shrink-0 mt-0.5" />
-            <span>{t("selectRole.securityMessage")}</span>
-          </div>
+        <div className="flex items-center justify-end gap-4">
+
 
           <div className="flex items-center gap-2 shrink-0">
             {/* Language selector */}

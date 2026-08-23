@@ -141,7 +141,7 @@ export default function DoctorRegister() {
         <div className="mt-8 grid gap-5">
           {/* Doctor name */}
           <div>
-            <Label>
+            <Label required>
               {t("doctorRegister.doctorName")}
             </Label>
 
@@ -170,7 +170,7 @@ export default function DoctorRegister() {
           {/* Phone + Email */}
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <Label>
+              <Label required>
                 {t("doctorRegister.phone")}
               </Label>
 
@@ -192,7 +192,7 @@ export default function DoctorRegister() {
             </div>
 
             <div>
-              <Label>
+              <Label required>
                 {t("doctorRegister.email")}
               </Label>
 
@@ -216,7 +216,7 @@ export default function DoctorRegister() {
 
           {/* Password */}
           <div>
-            <Label>
+            <Label required>
               {t("doctorRegister.password")}
             </Label>
 
@@ -235,7 +235,7 @@ export default function DoctorRegister() {
 
           {/* Clinic name */}
           <div>
-            <Label>
+            <Label required>
               {t("doctorRegister.clinicName")}
             </Label>
 
@@ -252,7 +252,7 @@ export default function DoctorRegister() {
 
           {/* Clinic address */}
           <div>
-            <Label>
+            <Label required>
               {t("doctorRegister.clinicAddress")}
             </Label>
 

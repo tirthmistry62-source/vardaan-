@@ -58,7 +58,7 @@ export default function DoctorLogin() {
             <p className="mt-2 text-slate-500 dark:text-slate-400 text-sm leading-6">{t("doctorLogin.description")}</p>
             <div className="mt-8 space-y-6">
               <div>
-                <Label className="text-slate-700 dark:text-slate-300">
+                <Label required className="text-slate-700 dark:text-slate-300">
   {t("doctorLogin.phoneNumber")}
 </Label>
                 <Input
@@ -71,7 +71,7 @@ export default function DoctorLogin() {
                 />
               </div>
               <div>
-                <Label className="text-slate-700 dark:text-slate-300">
+                <Label required className="text-slate-700 dark:text-slate-300">
   {t("doctorLogin.password")}
 </Label>
                 <Input
@@ -163,7 +163,7 @@ export default function DoctorLogin() {
 
               <div className="mt-8 space-y-5">
                 <div>
-                  <Label style={{ color: isDark ? '#cbd5e1' : '#334155' }}>
+                  <Label required style={{ color: isDark ? '#cbd5e1' : '#334155' }}>
   {t("doctorLogin.phoneNumber")}
 </Label>
                   <Input
@@ -181,7 +181,7 @@ export default function DoctorLogin() {
                   />
                 </div>
                 <div>
-                  <Label style={{ color: isDark ? '#cbd5e1' : '#334155' }}>
+                  <Label required style={{ color: isDark ? '#cbd5e1' : '#334155' }}>
   {t("doctorLogin.password")}
 </Label>
                   <Input

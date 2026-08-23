@@ -166,6 +166,7 @@ const handleForgotPassword = async () => {
             >
               <div>
                 <Label
+                  required
                   className={`text-slate-700 dark:text-slate-300 ${
                     isNonEnglish ? "tracking-[0.01em]" : ""
                   }`}
@@ -191,6 +192,7 @@ const handleForgotPassword = async () => {
 
               <div>
                 <Label
+                  required
                   className={`text-slate-700 dark:text-slate-300 ${
                     isNonEnglish ? "tracking-[0.01em]" : ""
                   }`}
@@ -384,6 +386,7 @@ const handleForgotPassword = async () => {
               >
                 <div>
                   <Label
+                    required
                     className={
                       isNonEnglish ? "tracking-[0.01em]" : ""
                     }
@@ -425,6 +428,7 @@ const handleForgotPassword = async () => {
 
                 <div>
                   <Label
+                    required
                     className={
                       isNonEnglish ? "tracking-[0.01em]" : ""
                     }

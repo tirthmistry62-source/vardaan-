@@ -144,7 +144,7 @@ export default function AddChild() {
           className="card-soft p-8 mt-8 grid gap-5"
         >
           <div>
-            <Label>{t("addChild.childName")}</Label>
+            <Label required>{t("addChild.childName")}</Label>
 
             <Input
               data-testid="ch-name"
@@ -164,7 +164,7 @@ export default function AddChild() {
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <Label>{t("addChild.dateOfBirth")}</Label>
+              <Label required>{t("addChild.dateOfBirth")}</Label>
 
               <Input
                 data-testid="ch-dob"
@@ -184,7 +184,7 @@ export default function AddChild() {
             </div>
 
             <div>
-              <Label>{t("addChild.gender")}</Label>
+              <Label required>{t("addChild.gender")}</Label>
 
               <Select
                 value={form.gender}
@@ -224,7 +224,7 @@ export default function AddChild() {
           </div>
 
           <div>
-            <Label>
+            <Label required>
               {t("addChild.currentWeight")}
             </Label>
 

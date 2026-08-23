@@ -577,6 +577,7 @@ export default function ChildProfile() {
                 <div>
                   <label className="block text-sm font-medium mb-1">
                     {t("childProfile.dateTaken")}
+                    <span className="ml-1 text-rose-500 dark:text-rose-400" aria-hidden="true">*</span>
                   </label>
 
                   <input
@@ -600,6 +601,7 @@ export default function ChildProfile() {
                 <div>
                   <label className="block text-sm font-medium mb-1">
                     {t("childProfile.doctorName")}
+                    <span className="ml-1 text-rose-500 dark:text-rose-400" aria-hidden="true">*</span>
                   </label>
 
                   <input

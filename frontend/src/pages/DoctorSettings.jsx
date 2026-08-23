@@ -107,7 +107,7 @@ export default function DoctorSettings() {
 </h2>
 
           <div>
-            <Label>{t("doctorSettings.doctorName")}</Label>
+            <Label required>{t("doctorSettings.doctorName")}</Label>
             <div className="mt-2 flex items-stretch rounded-xl border border-slate-300 dark:border-slate-700 focus-within:ring-2 focus-within:ring-teal-500 dark:ring-teal-400/20 focus-within:border-teal-600 overflow-hidden bg-white dark:bg-slate-900">
               <span className="px-4 flex items-center bg-slate-50 dark:bg-slate-800 text-slate-500 dark:text-slate-400 font-semibold border-r border-slate-200 dark:border-slate-800 select-none">Dr.</span>
               <Input
@@ -124,7 +124,7 @@ export default function DoctorSettings() {
           </div>
 
           <div>
-            <Label>{t("phoneNumber")}</Label>
+            <Label required>{t("phoneNumber")}</Label>
             <Input
               data-testid="dr-settings-phone"
               inputMode="numeric"
@@ -135,12 +135,12 @@ export default function DoctorSettings() {
           </div>
 
           <div>
-            <Label>{t("doctorSettings.clinicName")}</Label>
+            <Label required>{t("doctorSettings.clinicName")}</Label>
             <Input data-testid="dr-settings-clinic" value={form.clinic_name} onChange={upd("clinic_name")} className="mt-2 h-12 rounded-xl" />
           </div>
 
           <div>
-            <Label>{t("doctorSettings.clinicAddress")}</Label>
+            <Label required>{t("doctorSettings.clinicAddress")}</Label>
             <Textarea data-testid="dr-settings-address" value={form.clinic_address} onChange={upd("clinic_address")} rows={3} className="mt-2 rounded-xl" />
           </div>
 

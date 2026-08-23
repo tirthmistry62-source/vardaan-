@@ -88,7 +88,7 @@ await api.post("/auth/forgot-password", {
         </p>
 
         <div className="mt-8">
-          <Label className="text-slate-700 dark:text-slate-300">
+          <Label required className="text-slate-700 dark:text-slate-300">
             {t("forgotPassword.email")}
           </Label>
 

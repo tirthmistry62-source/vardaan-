@@ -194,7 +194,7 @@ export default function EditChild() {
           className="card-soft p-6 mt-6 grid gap-5"
         >
           <div>
-            <Label>
+            <Label required>
               {t("editChild.childName")}
             </Label>
 
@@ -213,7 +213,7 @@ export default function EditChild() {
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <Label>
+              <Label required>
                 {t("editChild.dateOfBirth")}
               </Label>
 
@@ -235,7 +235,7 @@ export default function EditChild() {
             </div>
 
             <div>
-              <Label>
+              <Label required>
                 {t("editChild.gender")}
               </Label>
 
@@ -273,7 +273,7 @@ export default function EditChild() {
           </div>
 
           <div>
-            <Label>
+            <Label required>
               {t("editChild.currentWeight")}
             </Label>
 

@@ -115,7 +115,7 @@ export default function ParentForgotPasswordVerify() {
         </p>
 
         <div className="mt-8">
-          <Label>
+          <Label required>
             {t("forgotPassword.otp")}
           </Label>
 

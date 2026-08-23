@@ -104,11 +104,11 @@ export default function ParentSettings() {
         <form onSubmit={save} className="card-soft p-6 grid gap-5">
           <h2 className="font-display text-lg text-slate-900 dark:text-slate-100">{t("accountDetails")}</h2>
           <div>
-            <Label>{t("fullName")}</Label>
+            <Label required>{t("fullName")}</Label>
             <Input data-testid="settings-name" value={full_name} onChange={(e) => setFullName(e.target.value)} className="mt-2 h-12 rounded-xl" />
           </div>
           <div>
-            <Label>{t("phoneNumber")}</Label>
+            <Label required>{t("phoneNumber")}</Label>
             <Input data-testid="settings-phone" inputMode="numeric" value={phone}
               onChange={(e) => setPhone(e.target.value.replace(/\D/g, "").slice(0, 15))}
               className="mt-2 h-12 rounded-xl" />

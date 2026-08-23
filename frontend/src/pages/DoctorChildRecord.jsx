@@ -291,22 +291,32 @@ export default function DoctorChildRecord() {
                   onSubmit={verifyAccess}
                   className="mt-4 flex flex-col sm:flex-row gap-3"
                 >
-                  <Input
-                    data-testid="doc-access-code"
-                    inputMode="numeric"
-                    value={accessCode}
-                    onChange={(e) =>
-                      setAccessCode(
-                        e.target.value
-                          .replace(/\D/g, "")
-                          .slice(0, 6)
-                      )
-                    }
-                    placeholder={t(
-                      "doctorChildRecord.sixDigitCodePlaceholder"
-                    )}
-                    className="h-11 rounded-xl sm:max-w-[220px]"
-                  />
+                  <div className="flex-1 sm:max-w-[220px]">
+                    <label
+                      className="mb-1 block text-xs font-medium text-slate-600 dark:text-slate-400"
+                      htmlFor="doc-access-code"
+                    >
+                      {t("doctorChildRecord.sixDigitCodePlaceholder")}
+                      <span className="ml-1 text-rose-500 dark:text-rose-400" aria-hidden="true">*</span>
+                    </label>
+                    <Input
+                      id="doc-access-code"
+                      data-testid="doc-access-code"
+                      inputMode="numeric"
+                      value={accessCode}
+                      onChange={(e) =>
+                        setAccessCode(
+                          e.target.value
+                            .replace(/\D/g, "")
+                            .slice(0, 6)
+                        )
+                      }
+                      placeholder={t(
+                        "doctorChildRecord.sixDigitCodePlaceholder"
+                      )}
+                      className="h-11 rounded-xl"
+                    />
+                  </div>
 
                   <Button
                     type="submit"

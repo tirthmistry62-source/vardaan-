@@ -178,7 +178,7 @@ export default function ParentRegister() {
 
         <div className="mt-8 grid gap-5">
           <div>
-            <Label>
+            <Label required>
               {t("parentRegister.fullName")}
             </Label>
 
@@ -195,7 +195,7 @@ export default function ParentRegister() {
           </div>
 
           <div>
-            <Label>
+            <Label required>
               {t("parentRegister.aadhaar")}
             </Label>
 
@@ -219,7 +219,7 @@ export default function ParentRegister() {
           </div>
 
           <div>
-            <Label>
+            <Label required>
               {t("parentRegister.phone")}
             </Label>
 
@@ -244,7 +244,7 @@ export default function ParentRegister() {
           </div>
 
           <div>
-            <Label>
+            <Label required>
               {t("parentRegister.email")}
             </Label>
 
@@ -267,7 +267,7 @@ export default function ParentRegister() {
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <Label>
+              <Label required>
                 {t("parentRegister.password")}
               </Label>
 
@@ -285,7 +285,7 @@ export default function ParentRegister() {
             </div>
 
             <div>
-              <Label>
+              <Label required>
                 {t("parentRegister.confirmPassword")}
               </Label>
 

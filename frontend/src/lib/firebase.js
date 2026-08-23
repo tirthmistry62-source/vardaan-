@@ -1,5 +1,6 @@
 import { initializeApp } from 'firebase/app';
 import { FirebaseMessaging } from '@capacitor-firebase/messaging';
+import { Capacitor } from '@capacitor/core';
 
 // Firebase configuration - UPDATE WITH YOUR VALUES FROM FIREBASE CONSOLE
 const firebaseConfig = {
@@ -50,6 +51,11 @@ export function initializeFirebase() {
  * @returns {Promise<string|null>} FCM token if successful, null otherwise
  */
 export async function requestFCMToken() {
+  if (!Capacitor.isNativePlatform()) {
+    console.log('Skipping native FCM token request on web');
+    return null;
+  }
+
   if (!isFirebaseConfigured()) {
     console.warn('Firebase not configured');
     return null;

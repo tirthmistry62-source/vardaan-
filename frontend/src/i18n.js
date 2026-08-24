@@ -109,6 +109,20 @@ forgotPassword: {
   invalidEmail: "Enter a valid email address",
   otpSent: "Password reset OTP sent",
   requestFailed: "Failed to send password reset OTP",
+  back: "Back",
+verifyTitle: "Verify OTP",
+verifyDescription: "Enter the OTP sent to your email address.",
+otp: "OTP",
+otpPlaceholder: "Enter the OTP",
+verifyOtp: "Verify OTP",
+
+resetTitle: "Reset Password",
+resetDescription: "Create a new password for your account.",
+newPassword: "New password",
+newPasswordPlaceholder: "Enter your new password",
+confirmPassword: "Confirm password",
+confirmPasswordPlaceholder: "Re-enter your new password",
+resetPassword: "Reset Password",
 },
 
           editChild: {
@@ -169,6 +183,11 @@ forgotPassword: {
   accountCreated:
     "Account created. Share this access code with doctors: {{code}}",
   registrationFailed: "Registration failed",
+  validDetailsMessage:
+  "Please make sure all required details are filled correctly.",
+email: "Email",
+emailDescription:
+  "We’ll use this email to help you reset your password if needed.",
 },
 
           childProfile: {
@@ -493,6 +512,20 @@ parentDashboard: {
   invalidEmail: "मान्य ईमेल पता दर्ज करें",
   otpSent: "पासवर्ड रीसेट OTP भेजा गया",
   requestFailed: "पासवर्ड रीसेट OTP भेजने में विफल",
+  back: "वापस",
+verifyTitle: "OTP सत्यापित करें",
+verifyDescription: "अपने ईमेल पर भेजा गया OTP दर्ज करें।",
+otp: "OTP",
+otpPlaceholder: "OTP दर्ज करें",
+verifyOtp: "OTP सत्यापित करें",
+
+resetTitle: "पासवर्ड रीसेट करें",
+resetDescription: "अपने खाते के लिए नया पासवर्ड बनाएं।",
+newPassword: "नया पासवर्ड",
+newPasswordPlaceholder: "अपना नया पासवर्ड दर्ज करें",
+confirmPassword: "पासवर्ड की पुष्टि करें",
+confirmPasswordPlaceholder: "अपना नया पासवर्ड दोबारा दर्ज करें",
+resetPassword: "पासवर्ड रीसेट करें",
 },
 
           parentNotifications: {
@@ -559,6 +592,11 @@ parentDashboard: {
   accountCreated:
     "खाता बन गया। यह एक्सेस कोड डॉक्टरों के साथ साझा करें: {{code}}",
   registrationFailed: "पंजीकरण विफल हुआ",
+  validDetailsMessage:
+  "कृपया सुनिश्चित करें कि सभी आवश्यक विवरण सही तरीके से भरे गए हैं।",
+email: "ईमेल",
+emailDescription:
+  "यदि आवश्यक हो, तो पासवर्ड रीसेट करने में सहायता के लिए हम इस ईमेल का उपयोग करेंगे।",
 },
 
           childProfile: {
@@ -962,6 +1000,20 @@ forgotPassword: {
   invalidEmail: "वैध ईमेल पत्ता प्रविष्ट करा",
   otpSent: "पासवर्ड रीसेट OTP पाठवला गेला",
   requestFailed: "पासवर्ड रीसेट OTP पाठवण्यात अयशस्वी",
+  back: "मागे",
+verifyTitle: "OTP सत्यापित करा",
+verifyDescription: "तुमच्या ईमेलवर पाठवलेला OTP प्रविष्ट करा.",
+otp: "OTP",
+otpPlaceholder: "OTP प्रविष्ट करा",
+verifyOtp: "OTP सत्यापित करा",
+
+resetTitle: "पासवर्ड रीसेट करा",
+resetDescription: "तुमच्या खात्यासाठी नवीन पासवर्ड तयार करा.",
+newPassword: "नवीन पासवर्ड",
+newPasswordPlaceholder: "तुमचा नवीन पासवर्ड प्रविष्ट करा",
+confirmPassword: "पासवर्डची पुष्टी करा",
+confirmPasswordPlaceholder: "तुमचा नवीन पासवर्ड पुन्हा प्रविष्ट करा",
+resetPassword: "पासवर्ड रीसेट करा",
 },
 
           childProfile: {
@@ -1082,6 +1134,11 @@ parentRegister: {
   accountCreated:
     "खाते तयार झाले. हा प्रवेश कोड डॉक्टरांसोबत शेअर करा: {{code}}",
   registrationFailed: "नोंदणी अयशस्वी झाली",
+  validDetailsMessage:
+  "कृपया सर्व आवश्यक तपशील योग्यरित्या भरले आहेत याची खात्री करा.",
+email: "ईमेल",
+emailDescription:
+  "आवश्यक असल्यास तुमचा पासवर्ड रीसेट करण्यात मदत करण्यासाठी आम्ही या ईमेलचा वापर करू.",
 },
 
           doctorLogin: {
@@ -1359,6 +1416,20 @@ doctorRegister: {
   invalidEmail: "માન્ય ઇમેઇલ સરનામું દાખલ કરો",
   otpSent: "પાસવર્ડ રીસેટ OTP મોકલવામાં આવ્યો",
   requestFailed: "પાસવર્ડ રીસેટ OTP મોકલવામાં નિષ્ફળ",
+  back: "પાછા",
+verifyTitle: "OTP ચકાસો",
+verifyDescription: "તમારા ઇમેઇલ પર મોકલાયેલ OTP દાખલ કરો.",
+otp: "OTP",
+otpPlaceholder: "OTP દાખલ કરો",
+verifyOtp: "OTP ચકાસો",
+
+resetTitle: "પાસવર્ડ રીસેટ કરો",
+resetDescription: "તમારા એકાઉન્ટ માટે નવો પાસવર્ડ બનાવો.",
+newPassword: "નવો પાસવર્ડ",
+newPasswordPlaceholder: "તમારો નવો પાસવર્ડ દાખલ કરો",
+confirmPassword: "પાસવર્ડની પુષ્ટિ કરો",
+confirmPasswordPlaceholder: "તમારો નવો પાસવર્ડ ફરીથી દાખલ કરો",
+resetPassword: "પાસવર્ડ રીસેટ કરો",
 },
 
           parentNotifications: {
@@ -1458,6 +1529,11 @@ parentRegister: {
   accountCreated:
     "એકાઉન્ટ બનાવવામાં આવ્યું. આ ઍક્સેસ કોડ ડૉક્ટરો સાથે શેર કરો: {{code}}",
   registrationFailed: "નોંધણી નિષ્ફળ ગઈ",
+  validDetailsMessage:
+  "કૃપા કરીને ખાતરી કરો કે બધી જરૂરી વિગતો યોગ્ય રીતે ભરેલી છે.",
+email: "ઇમેઇલ",
+emailDescription:
+  "જરૂર પડે તો પાસવર્ડ રીસેટ કરવામાં મદદ કરવા માટે અમે આ ઇમેઇલનો ઉપયોગ કરીશું.",
 },
 
 childProfile: {

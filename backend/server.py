@@ -513,7 +513,7 @@ async def check_and_create_vaccination_reminders():
                 continue
             
             # Check if reminder should be created (15 days or 7 days before due date)
-            for days_before in [15, 7]:
+            for days_before in [30, 15, 7]:
                 reminder_date = due_date - timedelta(days=days_before)
                 
                 # Check if today is the reminder day

@@ -12,7 +12,7 @@ function getInitial() {
   } catch (_e) {
     // ignore storage errors
   }
-  return "light";
+  return "dark";
 }
 
 export function ThemeProvider({ children }) {

@@ -4,7 +4,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { Toaster } from "sonner";
 import { getSession } from "@/lib/api";
 import { initializeFirebase, setupForegroundMessageListener } from "@/lib/firebase";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import ParentForgotPassword from "@/pages/ParentForgotPassword";
 import ParentForgotPasswordVerify from "@/pages/ParentForgotPasswordVerify";
 import ParentForgotPasswordReset from "@/pages/ParentForgotPasswordReset";
@@ -24,6 +24,7 @@ import DoctorRegister from "@/pages/DoctorRegister";
 import DoctorDashboard from "@/pages/DoctorDashboard";
 import DoctorChildRecord from "@/pages/DoctorChildRecord";
 import DoctorSettings from "@/pages/DoctorSettings";
+import OnboardingExperience, { ONBOARDING_STORAGE_KEY } from "@/components/onboarding/OnboardingExperience";
 
 function RequireRole({ role, children }) {
   const s = getSession();
@@ -81,6 +82,14 @@ function AnimatedRoutes() {
 }
 
 function App() {
+  const [onboardingComplete, setOnboardingComplete] = useState(() => {
+    try {
+      return localStorage.getItem(ONBOARDING_STORAGE_KEY) === "true";
+    } catch (_error) {
+      return false;
+    }
+  });
+
   // Initialize Firebase on app load
   useEffect(() => {
     initializeFirebase();
@@ -94,6 +103,7 @@ function App() {
       <BrowserRouter>
         <Toaster richColors position="top-center" />
         <AnimatedRoutes />
+        {!onboardingComplete && <OnboardingExperience onComplete={() => setOnboardingComplete(true)} />}
       </BrowserRouter>
     </div>
   );

@@ -4,8 +4,8 @@ import { initReactI18next } from "react-i18next";
 i18n
   .use(initReactI18next)
   .init({
-    lng: "en",
-    fallbackLng: "en",
+lng: localStorage.getItem("vardaan_language") || "en",
+fallbackLng: "en",
     interpolation: {
   escapeValue: false,
 },
@@ -378,6 +378,13 @@ doctorRegister: {
   accountCreated: "Account created",
   registrationFailed: "Registration failed",
   doctorIllustrationAlt: "Doctor illustration",
+  validDetailsMessage:
+  "Please make sure all required details are filled correctly.",
+email: "Email",
+emailDescription:
+  "We’ll use this email to help you reset your password if needed.",
+passwordPlaceholder: "Min 6 chars",
+emailPlaceholder: "Enter your email address",
 },
 
 parentDashboard: {
@@ -821,6 +828,13 @@ selectRole: {
   accountCreated: "खाता बन गया",
   registrationFailed: "पंजीकरण विफल हुआ",
   doctorIllustrationAlt: "डॉक्टर का चित्र",
+  validDetailsMessage:
+  "कृपया सुनिश्चित करें कि सभी आवश्यक विवरण सही तरीके से भरे गए हैं।",
+email: "ईमेल",
+emailDescription:
+  "यदि आवश्यक हो, तो पासवर्ड रीसेट करने में सहायता के लिए हम इस ईमेल का उपयोग करेंगे।",
+passwordPlaceholder: "कम से कम 6 अक्षर",
+emailPlaceholder: "अपना ईमेल पता दर्ज करें",
 },
 
           doctorLogin: {
@@ -1240,6 +1254,13 @@ doctorRegister: {
   accountCreated: "खाते तयार झाले",
   registrationFailed: "नोंदणी अयशस्वी झाली",
   doctorIllustrationAlt: "डॉक्टरचे चित्र",
+  validDetailsMessage:
+  "कृपया सर्व आवश्यक तपशील योग्यरित्या भरले आहेत याची खात्री करा.",
+email: "ईमेल",
+emailDescription:
+  "आवश्यक असल्यास तुमचा पासवर्ड रीसेट करण्यात मदत करण्यासाठी आम्ही या ईमेलचा वापर करू.",
+passwordPlaceholder: "किमान 6 अक्षरे",
+emailPlaceholder: "तुमचा ईमेल पत्ता प्रविष्ट करा",
 },
 
           vaccineInfo: {
@@ -1692,6 +1713,13 @@ doctorRegister: {
   accountCreated: "એકાઉન્ટ બનાવવામાં આવ્યું",
   registrationFailed: "નોંધણી નિષ્ફળ ગઈ",
   doctorIllustrationAlt: "ડૉક્ટરનું ચિત્ર",
+  validDetailsMessage:
+  "કૃપા કરીને ખાતરી કરો કે બધી જરૂરી વિગતો યોગ્ય રીતે ભરેલી છે.",
+email: "ઇમેઇલ",
+emailDescription:
+  "જરૂર પડે તો પાસવર્ડ રીસેટ કરવામાં મદદ કરવા માટે અમે આ ઇમેઇલનો ઉપયોગ કરીશું.",
+passwordPlaceholder: "ઓછામાં ઓછા 6 અક્ષરો",
+emailPlaceholder: "તમારું ઇમેઇલ સરનામું દાખલ કરો",
 },
 
           vaccineInfo: {
@@ -1812,5 +1840,10 @@ doctorRegister: {
       },
     },
   });
+
+export async function setAppLanguage(language) {
+  await i18n.changeLanguage(language);
+  localStorage.setItem("vardaan_language", language);
+}
 
 export default i18n;

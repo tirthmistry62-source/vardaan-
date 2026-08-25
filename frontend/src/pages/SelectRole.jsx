@@ -9,17 +9,16 @@ import {
 import ThemeToggle from "@/components/ThemeToggle";
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { setAppLanguage } from "@/i18n";
 import { Button } from "@/components/ui/button";
 
 export default function SelectRole() {
-  const { i18n, t } = useTranslation();
+  const { t } = useTranslation();
 
   const [languageOpen, setLanguageOpen] = useState(false);
   const languageRef = useRef(null); 
 
-  const changeLanguage = async (language) => {
-    await i18n.changeLanguage(language);
-  };
+
 
   useEffect(() => {
   const handleClickOutside = (event) => {
@@ -64,7 +63,7 @@ export default function SelectRole() {
                   <button
                     type="button"
                     onClick={() => {
-  changeLanguage("en");
+  setAppLanguage("en");
   setLanguageOpen(false);
 }}
                     className="w-full text-left px-3 py-2 rounded-lg text-sm hover:bg-slate-100 dark:hover:bg-slate-700"
@@ -75,7 +74,7 @@ export default function SelectRole() {
                   <button
                     type="button"
                     onClick={() => {
-  changeLanguage("hi");
+setAppLanguage("hi");
   setLanguageOpen(false);
 }}
                     className="w-full text-left px-3 py-2 rounded-lg text-sm hover:bg-slate-100 dark:hover:bg-slate-700"
@@ -86,7 +85,7 @@ export default function SelectRole() {
                   <button
                     type="button"
                     onClick={() => {
-  changeLanguage("mr");
+setAppLanguage("mr");
   setLanguageOpen(false);
 }}
                     className="w-full text-left px-3 py-2 rounded-lg text-sm hover:bg-slate-100 dark:hover:bg-slate-700"
@@ -97,7 +96,7 @@ export default function SelectRole() {
                   <button
                     type="button"
                     onClick={() => {
-  changeLanguage("gu");
+setAppLanguage("gu");
   setLanguageOpen(false);
 }}
                     className="w-full text-left px-3 py-2 rounded-lg text-sm hover:bg-slate-100 dark:hover:bg-slate-700"

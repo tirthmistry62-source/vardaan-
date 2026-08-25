@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { maskAadhaar } from "@/lib/vaccineStatus";
+import { setAppLanguage } from "@/i18n";
 import {
   User2,
   Trash2,
@@ -143,7 +144,7 @@ export default function ParentSettings() {
   value={i18n.language}
   onChange={async (e) => {
     const language = e.target.value;
-    await i18n.changeLanguage(language);
+await setAppLanguage(language);
 
     try {
       await api.patch("/parent/me", { language });

@@ -6,9 +6,9 @@ function getInitial() {
   try {
     const saved = localStorage.getItem("vax_theme");
     if (saved === "light" || saved === "dark") return saved;
-    if (typeof window !== "undefined" && window.matchMedia) {
-      return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
-    }
+if (typeof window !== "undefined") {
+  return "light";
+}
   } catch (_e) {
     // ignore storage errors
   }

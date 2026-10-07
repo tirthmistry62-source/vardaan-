@@ -44,9 +44,11 @@ JWT_TTL_HOURS = 24 * 30
 
 # Firebase Cloud Messaging (FCM) Configuration
 FCM_SERVICE_ACCOUNT_FILE = ROOT_DIR / "firebase-service-account.json"
-if not firebase_admin._apps:
+
+if not firebase_admin._apps and FCM_SERVICE_ACCOUNT_FILE.exists():
     cred = credentials.Certificate(str(FCM_SERVICE_ACCOUNT_FILE))
     firebase_admin.initialize_app(cred)
+
 FCM_PROJECT_ID = os.environ.get('FIREBASE_PROJECT_ID', '')
 
 

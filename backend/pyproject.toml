@@ -1,0 +1,18 @@
+[project]
+name = "vardaan"
+version = "1.0.0"
+requires-python = ">=3.13"
+dependencies = [
+    "fastapi==0.110.1",
+    "httpx==0.28.1",
+    "PyJWT==2.13.0",
+    "python-dateutil==2.9.0.post0",
+    "python-multipart==0.0.32",
+    "pydantic==2.13.4",
+]
+
+[dependency-groups]
+dev = [
+    "workers-py",
+    "workers-runtime-sdk",
+]

@@ -20,8 +20,13 @@ from typing import List, Optional, Any
 from datetime import datetime, timezone, timedelta, date
 from dateutil.relativedelta import relativedelta
 import json
-import firebase_admin
-from firebase_admin import credentials, messaging
+try:
+    import firebase_admin
+    from firebase_admin import credentials, messaging
+except ImportError:
+    firebase_admin = None
+    credentials = None
+    messaging = None
 
 import hashlib
 import secrets
@@ -45,7 +50,7 @@ JWT_TTL_HOURS = 24 * 30
 # Firebase Cloud Messaging (FCM) Configuration
 FCM_SERVICE_ACCOUNT_FILE = ROOT_DIR / "firebase-service-account.json"
 
-if not firebase_admin._apps and FCM_SERVICE_ACCOUNT_FILE.exists():
+if firebase_admin is not None and not firebase_admin._apps and FCM_SERVICE_ACCOUNT_FILE.exists():
     cred = credentials.Certificate(str(FCM_SERVICE_ACCOUNT_FILE))
     firebase_admin.initialize_app(cred)
 

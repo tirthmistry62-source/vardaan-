@@ -13,6 +13,7 @@ import uuid
 import random
 import bcrypt
 import jwt
+from workers import env
 import httpx
 from pathlib import Path
 from pydantic import BaseModel
@@ -39,11 +40,11 @@ if ENV_PATH.is_file():
 else:
     load_dotenv(ENV_PATH / 'backend' / '.env')
 
-SUPABASE_URL = os.environ['SUPABASE_URL'].rstrip('/')
-SUPABASE_KEY = os.environ['SUPABASE_SERVICE_ROLE_KEY']
+SUPABASE_URL = env.SUPABASE_URL.rstrip('/')
+SUPABASE_KEY = env.SUPABASE_SERVICE_ROLE_KEY
 REST_BASE = f"{SUPABASE_URL}/rest/v1"
 
-JWT_SECRET = os.environ.get('JWT_SECRET', 'vardaan-dev-secret-change-me')
+JWT_SECRET = env.JWT_SECRET
 JWT_ALGO = 'HS256'
 JWT_TTL_HOURS = 24 * 30
 
@@ -54,7 +55,7 @@ if firebase_admin is not None and not firebase_admin._apps and FCM_SERVICE_ACCOU
     cred = credentials.Certificate(str(FCM_SERVICE_ACCOUNT_FILE))
     firebase_admin.initialize_app(cred)
 
-FCM_PROJECT_ID = os.environ.get('FIREBASE_PROJECT_ID', '')
+FCM_PROJECT_ID = env.FIREBASE_PROJECT_ID
 
 
 _headers = {
@@ -622,10 +623,10 @@ async def ensure_parent_access_code(parent: dict) -> dict:
     return parent
 
 async def send_password_reset_otp(email: str, otp: str):
-    service_id = os.getenv("EMAILJS_SERVICE_ID")
-    template_id = os.getenv("EMAILJS_TEMPLATE_ID")
-    public_key = os.getenv("EMAILJS_PUBLIC_KEY")
-    private_key = os.getenv("EMAILJS_PRIVATE_KEY")
+    service_id = env.EMAILJS_SERVICE_ID
+    template_id = env.EMAILJS_TEMPLATE_ID
+    public_key = env.EMAILJS_PUBLIC_KEY
+    private_key = env.EMAILJS_PRIVATE_KEY 
 
     if not service_id or not template_id or not public_key:
         raise HTTPException(
@@ -1755,7 +1756,7 @@ app.include_router(api)
 app.add_middleware(
     CORSMiddleware,
     allow_credentials=True,
-    allow_origins=os.environ.get('CORS_ORIGINS', '*').split(','),
+    allow_origins=env.CORS_ORIGINS.split(','),
     allow_methods=["*"],
     allow_headers=["*"],
 )

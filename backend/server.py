@@ -129,12 +129,26 @@ def decode_token(token: str) -> dict:
     except jwt.PyJWTError:
         raise HTTPException(status_code=401, detail="Invalid or expired token")
 
-async def get_current(authorization: Optional[str] = Header(None)) -> dict:
-    if not authorization or not authorization.lower().startswith('bearer '):
-        raise HTTPException(status_code=401, detail="Missing bearer token")
-    token = authorization.split(' ', 1)[1].strip()
+
+security = HTTPBearer(auto_error=False)
+
+async def get_current(
+    credentials: Optional[HTTPAuthorizationCredentials] = Depends(security)
+) -> dict:
+    if not credentials:
+        raise HTTPException(
+            status_code=401,
+            detail="Missing bearer token"
+        )
+
+    token = credentials.credentials
     data = decode_token(token)
-    return {'user_id': data['sub'], 'role': data['role']}
+
+    return {
+        'user_id': data['sub'],
+        'role': data['role']
+    }
+
 
 async def require_parent(cur=Depends(get_current)) -> dict:
     if cur['role'] != 'parent':
